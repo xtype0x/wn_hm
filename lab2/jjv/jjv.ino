@@ -49,7 +49,7 @@ void loop() {
 //  delay(200);
   //send_bit1();
   //send_bit0();
-  send_marker_bit();
+  //send_marker_bit();
 }
 
 void send_bit0(){
@@ -152,7 +152,7 @@ void JJY_simu(time_t t)
     else  {send_bit0();} //:22-28
   } 
   send_marker_bit();  //:29
-  for(int i=6;i<10;i++){
+  for(int i=7;i<11;i++){
     if (d>=D[i])
           {send_bit1(); //:30-33
            d=d-D[i];}
@@ -164,9 +164,10 @@ void JJY_simu(time_t t)
   if(parity_H)
       send_bit1(); //:36
   else
-      send_bit0(); //:37
+      send_bit0(); //:36
+      
   if(parity_M)
-      send_bit1(); //:36
+      send_bit1(); //:37
   else
       send_bit0(); //:37
   send_bit0(); //:38
@@ -257,7 +258,7 @@ void WWVB_simu(time_t t)
     else  {send_bit0();} //:22-28
   } 
   send_marker_bit();  //:29
-  for(int i=6;i<10;i++){
+  for(int i=7;i<11;i++){
     if (d>=D[i])
           {send_bit1(); //:30-33
            d=d-D[i];}
