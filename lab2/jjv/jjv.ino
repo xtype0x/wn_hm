@@ -29,33 +29,40 @@ void loop() {
 //delay(800);
 //  analogWrite(pin,0);
 //  delay(200);
-//  send_bit1();
-//  send_bit0();
-//  send_marker_bit();
+  //send_bit1();
+  //send_bit0();
+  send_marker_bit();
 }
 
 void send_bit0(){
  //  Serial.print("0\n");
-  analogWrite(pin,HIGH);
+  //analogWrite(pin,HIGH);
+  TCCR3A = _BV(COM3B0);
   delay(800);
-  analogWrite(pin,LOW);
+  //analogWrite(pin,LOW);
+  TCCR3A = _BV(COM3B1);
   delay(200);
 }
 
 void send_bit1(){
   // Serial.print("1\n");
-  analogWrite(pin,HIGH);
+  TCCR3A = _BV(COM3B0);
+//  analogWrite(pin,HIGH);
   delay(500);
-  analogWrite(pin,LOW);
+//  analogWrite(pin,LOW);
+  TCCR3A = _BV(COM3B1);
   delay(500);
 }
 
 void send_marker_bit(){
  //  Serial.print("M\n");
-  analogWrite(pin,HIGH);
+  TCCR3A = _BV(COM3B0);
+  //analogWrite(pin,HIGH);
   delay(200);
-  analogWrite(pin,LOW);
+  //analogWrite(pin,LOW);
+  TCCR3A = _BV(COM3B1);
   delay(800);
+  
 }
 
 void JJY_simu(time_t t)
