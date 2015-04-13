@@ -75,11 +75,14 @@ void JJY_simu(time_t t)
   parity_M=false;
   parity_H=false;
   
+  y = y % 100;
+  
   showtime(t);
   
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
     if(i == 3){
+      send_bit0();
       continue;
     }  
     else if (m>=M[i])
@@ -94,6 +97,7 @@ void JJY_simu(time_t t)
   ///////////////////  hours 
   for(int i=0;i<7;i++){
     if(i == 2){
+      send_bit0();
       continue;
     }  
     else if (h>=H[i])
@@ -108,6 +112,7 @@ void JJY_simu(time_t t)
   /////////////////////////day
   for(int i=0;i<7;i++){
     if(i == 2){
+       send_bit0();
        continue; 
     }  
     if (d>=D[i])
@@ -173,6 +178,7 @@ void WWVB_simu(time_t t)
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
     if(i == 3){
+      send_bit0();
        continue; 
     }  
     else if (m>=M[i])
@@ -200,6 +206,7 @@ void WWVB_simu(time_t t)
   /////////////////////////day
   for(int i=0;i<7;i++){
     if(i == 2){
+       send_bit0();
        continue; 
     }  
     else if (d>=D[i])
