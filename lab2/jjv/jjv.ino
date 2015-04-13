@@ -22,8 +22,8 @@ void setup() {
 void loop() {
  
    t=now();
-   WWVB_simu(t);
-   //JJY_simu(t);
+   //WWVB_simu(t);
+   JJY_simu(t);
    //delay(1000);
 //analogWrite(pin,255);
 //delay(800);
@@ -79,7 +79,7 @@ void JJY_simu(time_t t)
   
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
-    if(i == 2){
+    if(i == 3){
       continue;
     }  
     else if (m>=M[i])
@@ -172,7 +172,7 @@ void WWVB_simu(time_t t)
   
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
-    if(i == 2){
+    if(i == 3){
        continue; 
     }  
     else if (m>=M[i])
