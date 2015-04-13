@@ -24,8 +24,8 @@ void loop() {
    t+=50;
    JJY_simu(t);
    delay(1000);
-//  analogWrite(pin,255);
-//  delay(800);
+//analogWrite(pin,255);
+//delay(800);
 //  analogWrite(pin,0);
 //  delay(200);
 //  send_bit1();
@@ -70,21 +70,16 @@ void JJY_simu(time_t t)
   showtime(t);
   
   send_marker_bit();  //:00
-  delay(1000);
   for(int i=0;i<8;i++){
     if (m>=M[i])
           {send_bit1(); //:01 -08
            m=m-M[i];
            parity_M=!parity_M;}
     else  {send_bit0();} //:01 -08
-  delay(1000);
   }
   send_marker_bit();  //:09
-  delay(1000);  
   send_bit0();   //:10
-  delay(1000);  
   send_bit0();   //:11
-  delay(1000);  
   ///////////////////  hours 
   for(int i=0;i<7;i++){
     if (h>=H[i])
@@ -92,81 +87,113 @@ void JJY_simu(time_t t)
            h=h-H[i];
            parity_H=!parity_H;}
     else  {send_bit0();} //:12-18
-  delay(1000);
   } 
-  send_marker_bit();  //:19
-  delay(1000);    
+  send_marker_bit();  //:19 
   send_bit0();   //:20
-  delay(1000);  
   send_bit0();   //:21
-  delay(1000); 
   /////////////////////////day
   for(int i=0;i<7;i++){
     if (d>=D[i])
           {send_bit1(); //:22-28
            d=d-D[i];}
     else  {send_bit0();} //:22-28
-  delay(1000);
   } 
   send_marker_bit();  //:29
-  delay(1000);  
   for(int i=6;i<10;i++){
     if (d>=D[i])
           {send_bit1(); //:30-33
            d=d-D[i];}
     else  {send_bit0();} //:30-33
-  delay(1000);
   }
   send_bit0();   //:34
-  delay(1000);  
   send_bit0();   //:35
-  delay(1000); 
 
   if(parity_H)
       send_bit1(); //:36
   else
       send_bit0(); //:37
-  delay(1000);
   if(parity_M)
       send_bit1(); //:36
   else
       send_bit0(); //:37
-  delay(1000);
   send_bit0(); //:38
-  delay(1000);
   send_marker_bit();  //:39
-  delay(1000);
   send_bit0(); //:40
   for(int i=0;i<8;i++){
     if (y>=Y[i])
           {send_bit1(); //:41-48
            y=y-Y[i];}
     else  {send_bit0();} //:41-48
-    delay(1000);
   }  
   send_marker_bit();  //:49
-  delay(1000);
   for(int i=0;i<3;i++){
     if (w>=W[i])
           {send_bit1(); //:50-52
            w=w-W[i];}
     else  {send_bit0();} //:50-52
-    delay(1000);
   }
   send_bit0(); //:53
-  delay(1000);
   send_bit0(); //:54
-  delay(1000);
   send_bit0(); //:55
-  delay(1000);
   send_bit0(); //:56
-  delay(1000);
   send_bit0(); //:57
-  delay(1000);
   send_bit0(); //:58
-  delay(1000);
   send_marker_bit();  //:59
-  delay(1000);
+}
+
+void WWVB_simu(time_t t)
+{
+  m=minute(t);
+  h=hour(t);
+  d=day(t);
+  y=year(t);
+  w=weekday(t);
+  
+  showtime(t);
+  
+  send_marker_bit();  //:00
+  for(int i=0;i<8;i++){
+    if (m>=M[i])
+          {send_bit1(); //:01 -08
+           m=m-M[i];
+           parity_M=!parity_M;}
+    else  {send_bit0();} //:01 -08
+  }
+  send_marker_bit();  //:09
+  send_bit0();   //:10
+  send_bit0();   //:11
+  ///////////////////  hours 
+  for(int i=0;i<7;i++){
+    if (h>=H[i])
+          {send_bit1(); //:12-18
+           h=h-H[i];}
+    else  {send_bit0();} //:12-18
+  } 
+  send_marker_bit();  //:19 
+  send_bit0();   //:20
+  send_bit0();   //:21
+  /////////////////////////day
+  for(int i=0;i<7;i++){
+    if (d>=D[i])
+          {send_bit1(); //:22-28
+           d=d-D[i];}
+    else  {send_bit0();} //:22-28
+  } 
+  send_marker_bit();  //:29
+  for(int i=6;i<10;i++){
+    if (d>=D[i])
+          {send_bit1(); //:30-33
+           d=d-D[i];}
+    else  {send_bit0();} //:30-33
+  }
+  send_bit0();   //:34
+  send_bit0();   //:35
+
+  //DUT1 sign set "-"
+  send_bit0();   //:36
+  send_bit1();   //:37
+  send_bit0();   //:38
+  send_marker_bit();  //:39
 }
 
 void showtime(time_t t)
