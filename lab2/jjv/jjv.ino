@@ -97,6 +97,7 @@ void JJY_simu(time_t t)
   
   y = y % 100;
   w = w-1;
+  mon = mon -1;
   
   if(y % 4 == 0 && y != 0){
     //Leap year
@@ -204,6 +205,7 @@ void WWVB_simu(time_t t)
   
   y = y % 100;
   w = w-1;
+  mon = mon -1;
   
   if(y % 4 == 0 && y != 0){
     //Leap year
