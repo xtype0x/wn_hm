@@ -1,6 +1,6 @@
 #include <Time.h>
 int pin = 6; // led pin for debug
-int m,h,d,y,w,parity_M,parity_H;
+int m,h,d,y,w,parity_M,parity_H,mon;
 
 int M []={40,20,10,0,8,4,2,1};
 int H []={20,10,0,8,4,2,1};
@@ -9,13 +9,31 @@ int Y []={80,40,20,10,8,4,2,1};
 int W []={4,2,1};
 time_t t=now();
 // 16000 / 8 / 2 / 25 = 40kHz
+
+int eomYear[14][2] = {
+  {0,0},      // Begin
+  {31,31},    // Jan
+  {59,60},    // Feb
+  {90,91},    // Mar
+  {120,121},  // Apr
+  {151,152},  // May
+  {181,182},  // Jun
+  {212,213},  // Jul
+  {243,244},  // Aug
+  {273,274},  // Sep
+  {304,305},  // Oct
+  {334,335},  // Nov
+  {365,366},  // Dec
+  {366,367}   // overflow
+};
+
 void setup() {                
   pinMode(6,OUTPUT);        
   TCCR3A = _BV(COM3B0);
   TCCR3B = _BV(WGM32) | _BV(CS31);
   OCR3A = 25;
   Serial.begin(9600);
-  setTime(12,30,54,4,13,2012);
+  setTime(12,30,54,13,4,2012);
 }
 
 // the loop routine runs over and over again forever:
@@ -72,10 +90,22 @@ void JJY_simu(time_t t)
   d=day(t);
   y=year(t);
   w=weekday(t);
+  mon=month(t);
+  
   parity_M=false;
   parity_H=false;
   
   y = y % 100;
+  w = w-1;
+  
+  if(y % 4 == 0 && y != 0){
+    //Leap year
+    d = d + eomYear[mon][1];
+  }
+  else{
+    d = d + eomYear[mon][0];
+  }   
+  
   
   showtime(t);
   
@@ -170,8 +200,18 @@ void WWVB_simu(time_t t)
   d=day(t);
   y=year(t);
   w=weekday(t);
+  mon=month(t);
   
   y = y % 100;
+  w = w-1;
+  
+  if(y % 4 == 0 && y != 0){
+    //Leap year
+    d = d + eomYear[mon][1];
+  }
+  else{
+    d = d + eomYear[mon][0];
+  }  
   
   showtime(t);
   
@@ -253,7 +293,7 @@ void WWVB_simu(time_t t)
 
   send_bit0(); //:54
   
-  if(y % 4 && y % 100 != 0){
+  if(y % 4 == 0 && y != 0){
     send_bit1(); //:55	
   }
   else{
@@ -284,8 +324,12 @@ void showtime(time_t t)
    Serial.print(day(t));
    Serial.print("\n");
 
-   Serial.print("week:");
+   Serial.print("weekday:");
    Serial.print(weekday(t));
+   Serial.print("\n");   
+   
+   Serial.print("month:");
+   Serial.print(month(t));
    Serial.print("\n");   
    
    Serial.print("year:");
