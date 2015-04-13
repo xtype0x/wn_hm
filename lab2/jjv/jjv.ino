@@ -1,12 +1,12 @@
 #include <Time.h>
 int pin = 6; // led pin for debug
-byte m,h,d,y,w,parity_M,parity_H;
+int m,h,d,y,w,parity_M,parity_H;
 
-byte M []={40,20,10,8,4,2,1};
-byte H []={20,10,8,4,2,1};
-byte D []={200,100,80,40,20,10,8,4,2,1};
-byte Y []={80,40,20,10,8,4,2,1};
-byte W []={4,2,1};
+int M []={40,20,10,8,4,2,1};
+int H []={20,10,8,4,2,1};
+int D []={200,100,80,40,20,10,8,4,2,1};
+int Y []={80,40,20,10,8,4,2,1};
+int W []={4,2,1};
 time_t t=now();
 // 16000 / 8 / 2 / 25 = 40kHz
 void setup() {                
