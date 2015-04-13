@@ -31,9 +31,9 @@ void setup() {
   pinMode(6,OUTPUT);        
   TCCR3A = _BV(COM3B0);
   TCCR3B = _BV(WGM32) | _BV(CS31);
-  OCR3A = 17;
+  OCR3A = 16.6667;
   Serial.begin(9600);
-  setTime(12,30,54,13,4,2012);
+  setTime(12,50,54,10,12,1994);
 }
 
 // the loop routine runs over and over again forever:
@@ -236,6 +236,7 @@ void WWVB_simu(time_t t)
   ///////////////////  hours 
   for(int i=0;i<7;i++){
     if(i == 2 ){
+        send_bit0();
         continue; 
     }  
     else if (h>=H[i])
