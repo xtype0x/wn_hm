@@ -2,9 +2,9 @@
 int pin = 6; // led pin for debug
 byte m,h,d,y,w,parity_M,parity_H;
 
-byte M []={40,20,10,0,8,4,2,1};
-byte H []={20,10,0,8,4,2,1};
-byte D []={200,100,0,80,40,20,10,8,4,2,1};
+byte M []={40,20,10,8,4,2,1};
+byte H []={20,10,8,4,2,1};
+byte D []={200,100,80,40,20,10,8,4,2,1};
 byte Y []={80,40,20,10,8,4,2,1};
 byte W []={4,2,1};
 time_t t=now();
@@ -15,15 +15,16 @@ void setup() {
   TCCR3B = _BV(WGM32) | _BV(CS31);
   OCR3A = 25;
   Serial.begin(9600);
-
+  setTime(12,30,54,4,13,2012);
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
  
-   t+=50;
-   JJY_simu(t);
-   delay(1000);
+   t=now();
+   WWVB_simu(t);
+   //JJY_simu(t);
+   //delay(1000);
 //analogWrite(pin,255);
 //delay(800);
 //  analogWrite(pin,0);
@@ -71,7 +72,10 @@ void JJY_simu(time_t t)
   
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
-    if (m>=M[i])
+    if(i == 2){
+      continue;
+    }  
+    else if (m>=M[i])
           {send_bit1(); //:01 -08
            m=m-M[i];
            parity_M=!parity_M;}
@@ -82,7 +86,10 @@ void JJY_simu(time_t t)
   send_bit0();   //:11
   ///////////////////  hours 
   for(int i=0;i<7;i++){
-    if (h>=H[i])
+    if(i == 2){
+      continue;
+    }  
+    else if (h>=H[i])
           {send_bit1(); //:12-18
            h=h-H[i];
            parity_H=!parity_H;}
@@ -93,6 +100,9 @@ void JJY_simu(time_t t)
   send_bit0();   //:21
   /////////////////////////day
   for(int i=0;i<7;i++){
+    if(i == 2){
+       continue; 
+    }  
     if (d>=D[i])
           {send_bit1(); //:22-28
            d=d-D[i];}
@@ -149,11 +159,16 @@ void WWVB_simu(time_t t)
   y=year(t);
   w=weekday(t);
   
+  y = y % 100;
+  
   showtime(t);
   
   send_marker_bit();  //:00
   for(int i=0;i<8;i++){
-    if (m>=M[i])
+    if(i == 2){
+       continue; 
+    }  
+    else if (m>=M[i])
           {send_bit1(); //:01 -08
            m=m-M[i];
            parity_M=!parity_M;}
@@ -164,7 +179,10 @@ void WWVB_simu(time_t t)
   send_bit0();   //:11
   ///////////////////  hours 
   for(int i=0;i<7;i++){
-    if (h>=H[i])
+    if(i == 2 ){
+        continue; 
+    }  
+    else if (h>=H[i])
           {send_bit1(); //:12-18
            h=h-H[i];}
     else  {send_bit0();} //:12-18
@@ -174,7 +192,10 @@ void WWVB_simu(time_t t)
   send_bit0();   //:21
   /////////////////////////day
   for(int i=0;i<7;i++){
-    if (d>=D[i])
+    if(i == 2){
+       continue; 
+    }  
+    else if (d>=D[i])
           {send_bit1(); //:22-28
            d=d-D[i];}
     else  {send_bit0();} //:22-28
@@ -194,6 +215,41 @@ void WWVB_simu(time_t t)
   send_bit1();   //:37
   send_bit0();   //:38
   send_marker_bit();  //:39
+  send_bit0();   //:40
+  send_bit1();   //:41
+  send_bit1();   //:42
+  send_bit0();   //:43
+  send_bit0();   //:44
+
+  for(int i=0;i<4;i++){
+    if (y>=Y[i])
+          {send_bit1(); //:45-48
+           y=y-Y[i];}
+    else  {send_bit0();} //:45-48
+  }  
+
+  send_marker_bit();  //:49
+
+  for(int i=4;i<8;i++){
+    if (y>=Y[i])
+          {send_bit1(); //:50-53
+           y=y-Y[i];}
+    else  {send_bit0();} //:50-53
+  }
+
+  send_bit0(); //:54
+  
+  if(y % 4 && y % 100 != 0){
+    send_bit1(); //:55	
+  }
+  else{
+	send_bit0(); //:55
+  }
+  
+  send_bit0(); //:56  assume leap second not set
+  send_bit0(); //:57  dst not in effect  
+  send_bit0(); //:58  dst not in effect  
+  send_marker_bit();  //:59
 }
 
 void showtime(time_t t)
