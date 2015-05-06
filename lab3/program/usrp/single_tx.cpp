@@ -148,11 +148,12 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 		size_t sym_cnt = sample_cnt/SYM_LEN;
 		size_t offset  = 0;
 		// add here to send the sym_cnt symbols
-		// using offset += usrp->get_device()->send(...)
+		offset += usrp->get_device()->send(zeros, sym_cnt, tx_md, C_FLOAT32, S_ONE_PKT);
+
 
 		//clean the buffer of USRP
 		for(size_t j = 0; j < 20; j++)
-			usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+			usrp->get_device()->send(pkt, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
 	}
 
 	tx_md.start_of_burst    = false;

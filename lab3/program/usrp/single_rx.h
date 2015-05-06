@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <stdint.h>
-#include <gri_fft.h>
+#include <gnuradio/gri_fft.h>
 
 using namespace std;
 #ifndef AOA
