@@ -7,6 +7,7 @@ lts_t = ifft(lts_f, 64);
 
 % Hint 1:
 % Complex cross correlation of Rx waveform with time-domain LTS 
+lts_corr = abs(conv(conj(fliplr(lts_t)), sign(raw_rx_dec)));
 
 % Skip early and late samples
 lts_corr = lts_corr(32:end-32);
