@@ -161,12 +161,13 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 	while(rx_cnt < s_cnt) {
 		size_t  read_cnt = 80;
 		//At last recv(), modify read_cnt to receive the remaining samples
-		//if (s_cnt - rx_cnt < read_cnt)
+		if (s_cnt - rx_cnt < read_cnt){
+		  read_cnt = s_cnt - rx_cnt;
+		}
 			// what is the number of remaining samples? read_cnt = ...;
-			
-		rx_cnt += usrp->get_device()->recv(pkt, SYM_LEN, rx_md, C_FLOAT32, R_ONE_PKT);
+		rx_cnt += usrp->get_device()->recv(pkt, read_cnt, rx_md, C_FLOAT32, R_ONE_PKT);
 		//rx_cnt is the total number you have received
-		cout << rx_md.fragment_offset << " hello " << endl;
+		//cout << rx_cnt << " hello " << endl;
 
 		if (rx_cnt < 100)
 			cout << "Ant" << " recving at " << rx_md.time_spec.get_real_secs() << endl;

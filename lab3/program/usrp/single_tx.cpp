@@ -133,7 +133,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 	usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
 
 	tx_md.start_of_burst    = false;
-	tx_md.end_of_burst		= false; 
+	tx_md.end_of_burst		= false;
 
 	// TODO:
 	// Send Signals until press ^C
@@ -141,24 +141,24 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 	// How many symbols you have to send? Ans: sym_cnt
 	// pkt: records the samples which we want to send
 	// using offset += usrp->get_device()->send(...)
-	
 	// remove content of within while loop
 
 	while(!stop_signal) {
 		size_t sym_cnt = sample_cnt/SYM_LEN;
 		size_t offset  = 0;
 		// add here to send the sym_cnt symbols
-		offset += usrp->get_device()->send(zeros, sym_cnt, tx_md, C_FLOAT32, S_ONE_PKT);
+		offset += usrp->get_device()->send(pkt, sym_cnt, tx_md, C_FLOAT32, S_ONE_PKT);
 
 
 		//clean the buffer of USRP
 		for(size_t j = 0; j < 20; j++)
-			usrp->get_device()->send(pkt, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+			usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+		cout<<offset<<" sended"<<endl;
 	}
 
 	tx_md.start_of_burst    = false;
-	tx_md.end_of_burst		= true; 
-	
+	tx_md.end_of_burst		= true;
+
 	usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
 
     boost::this_thread::sleep(boost::posix_time::seconds(1));
