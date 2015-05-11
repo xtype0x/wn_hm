@@ -158,6 +158,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 	
 	// remove content of within while loop
 	cout << endl << "# of recv samples: " << s_cnt << endl;
+	gr_complex *current = pkt;
 	while(rx_cnt < s_cnt) {
 		size_t  read_cnt = 80;
 		//At last recv(), modify read_cnt to receive the remaining samples
@@ -165,10 +166,11 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 		  read_cnt = s_cnt - rx_cnt;
 		}
 			// what is the number of remaining samples? read_cnt = ...;
-		rx_cnt += usrp->get_device()->recv(pkt, read_cnt, rx_md, C_FLOAT32, R_ONE_PKT);
+		rx_cnt += usrp->get_device()->recv(current, read_cnt, rx_md, C_FLOAT32, R_ONE_PKT);
+		current = current + read_cnt;
 		//rx_cnt is the total number you have received
 		//cout << rx_cnt << " hello " << endl;
-
+		cout<<abs(*pkt)<<endl<<endl;
 		if (rx_cnt < 100)
 			cout << "Ant" << " recving at " << rx_md.time_spec.get_real_secs() << endl;
 	}

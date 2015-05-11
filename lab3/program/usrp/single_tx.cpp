@@ -125,7 +125,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 	std::cout << "Press Ctrl + C to stop streaming..." << std::endl;
 
 	//tx_md.time_spec = usrp->get_time_now() + uhd::time_spec_t(0, SYM_CNT*start, 1e8/inter);
-	
+
 	tx_md.start_of_burst    = true;
 	tx_md.end_of_burst      = false;
 	tx_md.has_time_spec     = false;
@@ -151,9 +151,9 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 
 
 		//clean the buffer of USRP
-		for(size_t j = 0; j < 20; j++)
-			usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
-		cout<<offset<<" sended"<<endl;
+		//for(size_t j = 0; j < 20; j++)
+		//usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+		//cout<<offset<<" sended"<<endl;
 	}
 
 	tx_md.start_of_burst    = false;
