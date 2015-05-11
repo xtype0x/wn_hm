@@ -147,13 +147,16 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 		size_t sym_cnt = sample_cnt/SYM_LEN;
 		size_t offset  = 0;
 		// add here to send the sym_cnt symbols
-		offset += usrp->get_device()->send(pkt, sym_cnt, tx_md, C_FLOAT32, S_ONE_PKT);
-
+		for(size_t i = 0; i < sym_cnt; i++){
+			offset += usrp->get_device()->send(pkt+offset, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+			cout<<abs(*(pkt+offset))<<endl;
+		}
 
 		//clean the buffer of USRP
-		//for(size_t j = 0; j < 20; j++)
-		//usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
+		for(size_t j = 0; j < 20; j++)
+			usrp->get_device()->send(zeros, SYM_LEN, tx_md, C_FLOAT32, S_ONE_PKT);
 		//cout<<offset<<" sended"<<endl;
+		cout<<endl;
 	}
 
 	tx_md.start_of_burst    = false;
