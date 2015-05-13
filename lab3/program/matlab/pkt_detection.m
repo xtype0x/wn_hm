@@ -15,13 +15,13 @@ lts_t = ifft(lts_f, 64);
 
 % Skip early and late samples
 % lts_corr = lts_corr(32:end-32);
-plot(abs(lts_corr));
+% plot(abs(lts_corr));
 
 % Hint 2:
 % Get the lts_ind and payload_ind
 % Don't forget that "You have skip early and late samples"
 peak = find(lts_corr>THRESH_LTS_CORR*max(lts_corr));
-lag(peak(1))
+lag(peak(1));
 % [LTS1, LTS2] = meshgrid(peak,peak);
 % [second_peak_index, y] = find(LTS2-LTS1 == length(lts_t));
 % pick_peak = second_peak_index(1);
