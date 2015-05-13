@@ -5,7 +5,7 @@ close all;
 global ANT_CNT LTS_LEN SYM_LEN NUM_SYM FFT_OFFSET LTS_CORR_THRESH
 
 DO_CFO_CORRECTION = 1;	% Enable CFO estimation/correction
-DO_PHASE_TRACK = 0; % Enable phase tracking
+DO_PHASE_TRACK = 1; % Enable phase tracking
 LTS_LEN = 160;
 NUM_LTS = 2;
 NUM_SYM = 50;
