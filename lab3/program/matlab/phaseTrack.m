@@ -5,7 +5,6 @@ function rx_out = phaseTrack(rx_in, tx_in, cf)
 	
     rx_buf = rx_in;
     tx_buf = tx_in;
-    
 	% hint 1: find your pilot index according to signal_generator.m
     % >> pilot_idx = ___;
     pilot_idx = [8 22 44 58];
@@ -18,13 +17,13 @@ function rx_out = phaseTrack(rx_in, tx_in, cf)
     % phase_shift_regressed = ___ ;  % should be complex values!!
 	
     [B, bint, r, rint, stats]=regress(phase_shift,X');
-    % size(B)
-
-    phase_shift_regressed=B'*[1:64; rx_buf'];
-    phase_shift_regressed=abs(phase_shift_regressed).*exp(i*angle(phase_shift_regressed));
+    % size([1:64 ; ones(1,size(rx_buf))])
+    phase_shift_regressed=B'*[ones(1,size(rx_buf));1:64];
+    phase_shift_regressed=phase_shift_regressed.*exp(i*phase_shift_regressed);
 
 
 
 	% hint 3: Use phase_shift_regressed to remove SFO
-		rx_out = rx_in ./ phase_shift_regressed'
+		rx_out = rx_in ./ phase_shift_regressed';
+    % scatter(abs(rx_out).*cos(angle(rx_out)), abs(rx_out).*sin(angle(rx_out)));
 end

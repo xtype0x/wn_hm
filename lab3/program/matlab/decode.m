@@ -5,7 +5,7 @@ close all;
 global ANT_CNT LTS_LEN SYM_LEN NUM_SYM FFT_OFFSET LTS_CORR_THRESH
 
 DO_CFO_CORRECTION = 1;	% Enable CFO estimation/correction
-DO_PHASE_TRACK = 1; % Enable phase tracking
+DO_PHASE_TRACK = 0; % Enable phase tracking
 LTS_LEN = 160;
 NUM_LTS = 2;
 NUM_SYM = 50;
@@ -29,7 +29,7 @@ load('../trace/src_data_1.mat');
 cf = 1;
 figure(cf);
 
-rx = read_complex_binary(['../trace/recv_signal.bin']);
+rx = read_complex_binary(['../trace/recv_signal (1).bin']);
 rx = rx(SEGMENT_START:SEGMENT_START+40000-1);
 rx_ant = rx;
 save(['../trace/recv_signal.mat'], 'rx');
@@ -47,7 +47,19 @@ payload_ind %display the payload_ind
 
 % CFO correction
 if(DO_CFO_CORRECTION)
-	rx_ant = cfo_correction(rx_ant, lts_ind);
+	% global ANT_CNT FFT_OFFSET 
+	% Extract LTS (not yet CFO corrected)
+	rx_lts = rx_ant(lts_ind:lts_ind+159, 1);
+	rx_lts1 = rx_lts(-64+-FFT_OFFSET + [97:160]);
+	rx_lts2 = rx_lts(-FFT_OFFSET + [97:160]);
+
+	% Calculate coarse CFO est
+	rx_cfo_est_lts = mean(unwrap(angle(rx_lts1 .* conj(rx_lts2))));
+	rx_cfo_est_lts = rx_cfo_est_lts/(2*pi*64);
+
+	%Apply CFO correction to raw Rx waveform
+	rx_cfo_corr_t = exp(1i*2*pi*rx_cfo_est_lts*[0:length(rx_ant(:,1))-1]');
+	rx_ant = rx_ant .* repmat(rx_cfo_corr_t, 1, ANT_CNT);
 end
 
 % Re-extract LTS for channel estimate
@@ -143,6 +155,7 @@ if (DO_PHASE_TRACK)
     for sym_i = 1:N_OFDM_SYMS
         syms_eq_pc_mat( :, sym_i ) = phaseTrack( syms_eq_mat( :, sym_i ), tx_mod_data(:, sym_i), cf );
     end
+    % rx_out = phaseTrack( syms_eq_mat( :, 1 ), tx_mod_data(:, 1), cf );
     payload_syms_mat = syms_eq_pc_mat( SC_IND_DATA,: );
 
 else
@@ -150,12 +163,18 @@ else
 end
 
 signal = payload_syms_mat;
+size(tx_mod_data(SC_IND_DATA,:))
+snr_mat = tx_mod_data(SC_IND_DATA,:).^2 ./ (tx_mod_data(SC_IND_DATA,:).^2 - abs(signal).^2);
+subcarrier_SNR = 10*log10(mean(snr_mat,2));
+SNR = 10*log10(mean(snr_mat,1));
 
 % Todo
 % Calculate average SNR(subcarrier, symbol) here
 % SNR = 10*log10( signal_pow./noise_pow );
 % subcarrier_SNR = ...;	%record average SNR of each subcarrier
 % SNR = ...;	%record average SNR of each symbol
+% SNR = 10*log10(signal_pow/noise_pow);
+
 
 cf  = cf+1;
 figure(cf);
@@ -187,7 +206,6 @@ legend('Rx','Tx');
 title('Tx and Rx Constellations')
 grid on;
 hold off;
-
 % =================================================================
 % CFO correction
 % 	-- Use the first antenna to compute CFO --
