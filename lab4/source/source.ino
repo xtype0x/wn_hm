@@ -11,7 +11,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 #define CHANNEL 26      // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
-#define TX_SOFT_ACK 1   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
+#define TX_SOFT_ACK 0   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
 #define TX_SOFT_FCS 1
 #define TX_RETRY 1      // pkt_Tx() retransmit packets if failed.
 #define TX_BACKOFF 100  // sleep time in ms
@@ -20,6 +20,8 @@ uint8_t TxBuffer[128]; // can be used as header and full pkt.
 uint8_t RxBuffer[128];
 uint8_t softACK[8];
 char teststr[] = "hello world!!";
+
+
 
 uint8_t TX_available; // set to 1 if need a packet delivery, and use need_TX() to check  its value
 // here are internal variables, please do not modify them.
@@ -54,30 +56,14 @@ void loop()
   uint8_t inhigh;
   uint8_t inlow;
   uint8_t tx_suc;
+  
+  ping();
 
   if(need_TX()){
     delay(TX_BACKOFF);
-    tx_suc = pkt_Tx(0x0001, teststr);
+    tx_suc = pkt_Tx(0x0002, teststr);
     TX_available = 1;
   }
-
-/** this is from the original example
- *  it reads bytes from your serial input, then transmit it
-  if (Serial.available()){
-    ZigduinoRadio.beginTransmission();
-    Serial.println();
-    Serial.print("Tx: ");
-    while(Serial.available())
-    {
-      char c = Serial.read();
-      Serial.write(c);
-      ZigduinoRadio.write(c);
-    }
-    Serial.println();
-    ZigduinoRadio.endTransmission((uint16_t)0x0001); //0xffff for broadcast
-
-    }
- */
 
 if(has_RX())
   {
@@ -309,4 +295,20 @@ void onXmitDone(radio_tx_done_t x)
     Serial.print("(CS busy)");
   }
   Serial.println();
+}
+
+void ping(){
+  Serial.println();
+  Serial.println("-- start ping --");
+  unsigned long t1 = millis(),t2;
+  //start ping
+  
+  delay(1234);
+  
+  //end ping
+  t2 = millis();
+  Serial.print("RTT: ");
+  Serial.print(t2-t1);
+  Serial.println("ms");
+  Serial.println("-- end ping --");
 }
