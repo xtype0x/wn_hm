@@ -10,6 +10,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 #define NODE_ID 0x0010
 #define CHANNEL 26
 #define TX_DO_CARRIER_SENSE 1
+#define TX_SOFT_ACK 1
 #define TX_SOFT_FCS 1
 
 void setup()
