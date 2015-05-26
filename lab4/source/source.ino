@@ -28,6 +28,8 @@ typedef struct packet{
   char data[20];
 } Packet;
 
+Packet pkt;
+
 uint8_t TX_available; // set to 1 if need a packet delivery, and use need_TX() to check  its value
 // here are internal variables, please do not modify them.
 uint8_t retry_c;
@@ -63,11 +65,11 @@ void loop()
   uint8_t tx_suc;
   
   //ping();
-  Packet pkt;
   
-  pkt.type = 0;
-  pkt.id = 1;
-  strcpy(pkt.data,"hello world");
+  
+  pkt.type = 123;
+  pkt.id = 456;
+  strcpy(pkt.data,"123456");
   
   //char txData[80]={};
   //memcpy(txData,&pkt,sizeof(pkt));
@@ -81,22 +83,18 @@ if(has_RX())
   {
     Serial.println();
     Serial.print("Rx: ");
-    for(uint8_t i=0;i<RX_pkt_len;i++){
-      inbyte = RxBuffer[i];
-      if(printable(inbyte)){
-        Serial.write(inbyte);
-      }else{
-        Serial.print(".");
-      }
-      /* for printing bytes in hex
-      Serial.print("[");
-      inhigh = inbyte/16;
-      inlow = inbyte%16;
-      Serial.write(inhigh>9?'A'+inhigh-10:'0'+inhigh);
-      Serial.write(inlow>9?'A'+inlow-10:'0'+inlow);
-      Serial.print("] ");
-      */
+    char dataBuffer[256]={};
+    for(uint8_t i=TX_HEADER_LEN;i<RX_pkt_len-4;i++){
+      dataBuffer[i-TX_HEADER_LEN] = RxBuffer[i]; 
     }
+    Packet *rxpkt = (Packet*) dataBuffer;
+    Serial.print("type:");
+    Serial.print(rxpkt->type);
+    Serial.print(", id:");
+    Serial.print(rxpkt->id);
+    Serial.print(", data:");
+    Serial.println(rxpkt->data);
+    
     Serial.println();
     Serial.print("LQI: ");
     Serial.print(ZigduinoRadio.getLqi(), 10);
