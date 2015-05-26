@@ -6,6 +6,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 */
 
 #include <ZigduinoRadio.h>
+#include <string.h>
 
 #define NODE_ID 0x0001  // node id of this node. change it with different boards
 #define CHANNEL 26      // check correspond frequency in SpectrumAnalyzer
@@ -21,7 +22,11 @@ uint8_t RxBuffer[128];
 uint8_t softACK[8];
 char teststr[] = "hello world!!";
 
-
+typedef struct packet{
+  int type;
+  int id;
+  char data[20];
+} Packet;
 
 uint8_t TX_available; // set to 1 if need a packet delivery, and use need_TX() to check  its value
 // here are internal variables, please do not modify them.
@@ -36,7 +41,7 @@ void setup()
   init_header();
   retry_c = 0;
   TX_available = 1;
-  RX_available = 0;
+  RX_available = 1;
   ZigduinoRadio.begin(CHANNEL,TxBuffer);
   ZigduinoRadio.setParam(phyPanId,(uint16_t)0xABCD );
   ZigduinoRadio.setParam(phyShortAddr,(uint16_t)NODE_ID );
@@ -45,7 +50,7 @@ void setup()
 
   // register event handlers
   ZigduinoRadio.attachError(errHandle);
-  ZigduinoRadio.attachTxDone(onXmitDone);
+  //ZigduinoRadio.attachTxDone(onXmitDone);
   ZigduinoRadio.attachReceiveFrame(pkt_Rx);
 }
 
@@ -57,11 +62,18 @@ void loop()
   uint8_t inlow;
   uint8_t tx_suc;
   
-  ping();
-
+  //ping();
+  Packet pkt;
+  
+  pkt.type = 0;
+  pkt.id = 1;
+  strcpy(pkt.data,"hello world");
+  
+  //char txData[80]={};
+  //memcpy(txData,&pkt,sizeof(pkt));
   if(need_TX()){
     delay(TX_BACKOFF);
-    tx_suc = pkt_Tx(0x0002, teststr);
+    tx_suc = pkt_Tx(0x0002,(char*) &pkt,sizeof(Packet));
     TX_available = 1;
   }
 
@@ -127,7 +139,7 @@ void init_header(){
  *
  * Feel free to modify this function if needed.
  */
-uint8_t pkt_Tx(uint16_t dst_addr, char* msg){
+uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   uint16_t fcs;
   uint8_t i;
   uint8_t pkt_len;
@@ -143,9 +155,11 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg){
     TxBuffer[0] = 0x41;
   }
   // fill the payload
-  for(i = 0; msg[i] != '\0'; i++){
+  for(i = 0; i< datalength; i++){
     TxBuffer[TX_HEADER_LEN + i] = msg[i];
   }
+  Serial.print("sendsize: ");
+  Serial.println(i);
   pkt_len = TX_HEADER_LEN + i;
   // fill the software fcs
   if(TX_SOFT_FCS){
