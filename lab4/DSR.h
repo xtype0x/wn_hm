@@ -45,13 +45,20 @@ rreq
 */
 int DSR::get_request(int _src, int _des, int _req, int _route[]){
   //check if route exist
+  /*
   if(route[0] != 0){
   	return 0;
   }
+  */ 
+
   //check if dest
   if(_des == nodeid){
   	return 2;
   }
+  //TODO check if already forward
+
+
+  //append in order to broadcast
   int i;
   for (i = 0; i < ROUTE_NO; ++i){
   	if(route[i] == 0){
@@ -75,7 +82,7 @@ DsrPacket DSR::send_request(int _dest){
 	send.req_id = nodeid;
 	send.type = 1;
 	for (int i = 0; i < ROUTE_NO; ++i){
-		send.route = 0;	
+		send.route[i] = 0;	
 	}
 	return send;
 }
@@ -86,7 +93,7 @@ DsrPacket DSR::send_reply(){
 	send.req_id = nodeid;
 	send.type = 2;
 	for (int i = 0; i < ROUTE_NO; ++i){
-		send.route = 0;	
+		send.route[i] = 0;	
 	}
 	return send;	
 }
