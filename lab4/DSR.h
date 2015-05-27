@@ -94,7 +94,7 @@ int DSR::in_cache(int dest)
 	if(cache[0][dest] == 0)  //not in cache
 		return 0;
 	else 
-		return 1;
+		return cache[0][dest];
 
 }
 
