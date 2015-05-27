@@ -160,9 +160,7 @@ DsrPacket DSR::send_reply(){
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
 	
 	int i;
-	_dest = route[0];
-	for(int i=1; i<length; i++)
-	{
+	for(i=0; i<length; i++){
 		if(route[i]==nodeid)
 			break;
 		else
@@ -236,11 +234,12 @@ DsrPacket DSR::send_normal(DsrPacket* pkt){
 	length =0;
 	return send;
 }
+
 void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 {
 	
-	for(int i=0;i<10;i++)cout<<rrep_route[i]<<" ";
-		cout<<endl; 
+	// for(int i=0;i<10;i++)cout<<rrep_route[i]<<" ";
+	// 	cout<<endl; 
 
 	int cnt = 0;
 	int route [RECORD_SIZE] ;
