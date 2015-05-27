@@ -140,11 +140,12 @@ void init_header(){
  *
  * Feel free to modify this function if needed.
  */
-uint8_t pkt_Tx(uint16_t dst_addr, char* msg){
+uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   uint16_t fcs;
   uint8_t i;
   uint8_t pkt_len;
   uint8_t tmp_byte;
+  uint8_t checksum = 0;
   radio_cca_t cca = RADIO_CCA_FREE;
   int8_t rssi;
 
@@ -156,9 +157,14 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg){
     TxBuffer[0] = 0x41;
   }
   // fill the payload
-  for(i = 0; msg[i] != '\0'; i++){
+  for(i = 0; i< datalength; i++){
     TxBuffer[TX_HEADER_LEN + i] = msg[i];
+    checksum += (int)msg[i] % 10;
   }
+  checksum %= 10;
+  TxBuffer[2] = checksum;
+  Serial.print("checksum: ");
+  Serial.println(checksum);
   pkt_len = TX_HEADER_LEN + i;
   // fill the software fcs
   if(TX_SOFT_FCS){
@@ -235,6 +241,17 @@ uint8_t* pkt_Rx(uint8_t len, uint8_t* frm, uint8_t lqi, uint8_t crc_fail){
       return RxBuffer;
     }
   }
+  //checksum checked
+  uint8_t checksum = 0;
+  for(uint8_t i=TX_HEADER_LEN;i<len-4;i++){
+    checksum += (int)frm[i] % 10;
+  }
+  checksum %= 10;
+  if(frm[2] != checksum){
+    Serial.println("checksum failed");
+    return RxBuffer;
+  }
+  
   // send software ack
   if(frm[0] & 0x20){
     softACK[2] = frm[2];
