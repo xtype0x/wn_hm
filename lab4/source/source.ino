@@ -31,16 +31,21 @@ uint8_t RX_pkt_len;
 
 DsrPacket pkt;
 DSR node(NODE_ID);
-unsigned long t1,t2;
+unsigned long t1,t2,start;
 int flag;
+int ping_cnt;
+int success_ping;
 
 // the setup() function is called when Zigduino staets or reset
 void setup()
 {
   init_header();
+  start = millis();
   t1 = 0;
   flag = 0;
   retry_c = 0;
+  ping_cnt = 0;
+  success_ping=0;
   TX_available = 1;
   RX_available = 1;
   ZigduinoRadio.begin(CHANNEL,TxBuffer);
@@ -68,8 +73,14 @@ void loop()
   uint8_t inhigh;
   uint8_t inlow;
   
-  if(NODE_ID == 0x0001 && flag && t1 == 0)ping();
-  
+  if(NODE_ID == 0x0001 && flag && t1 == 0 && ping_cnt < 100){
+    ping();
+    ping_cnt++;
+  }
+  if(millis() - start > 10000){
+    Serial.println("Success rate:");
+    Serial.println(success_ping*100/ping_cnt);
+  }
   //char txData[80]={};
   //memcpy(txData,&pkt,sizeof(pkt));
   
@@ -94,6 +105,7 @@ void loop()
       case 4:
         if(pkt.dest_id == pkt.req_id){//ping end
           t2 = millis();
+          success_ping++;
           Serial.print("RTT:");
           Serial.println(t2-t1);
           t1 = 0;
