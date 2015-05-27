@@ -9,6 +9,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 #include <string.h>
 
 #define NODE_ID 0x0001  // node id of this node. change it with different boards
+
 #define CHANNEL 26      // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
@@ -68,19 +69,18 @@ void loop()
   
   
   pkt.type = 123;
-  pkt.id = 456;
+  pkt.id = 56;
   strcpy(pkt.data,"123456");
   
   //char txData[80]={};
   //memcpy(txData,&pkt,sizeof(pkt));
   if(need_TX()){
     delay(TX_BACKOFF);
-    tx_suc = pkt_Tx(0x0002,(char*) &pkt,sizeof(Packet));
+    tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(Packet));
     TX_available = 1;
   }
 
-if(has_RX())
-  {
+  if(has_RX()){
     Serial.println();
     Serial.print("Rx: ");
     char dataBuffer[256]={};
@@ -104,7 +104,7 @@ if(has_RX())
     Serial.print(ZigduinoRadio.getLastEd(), 10);
     Serial.println("dBm");
   }
-  delay(100);
+  //delay(100);
 }
 
 void init_header(){
@@ -142,6 +142,7 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   uint8_t i;
   uint8_t pkt_len;
   uint8_t tmp_byte;
+  uint8_t checksum = 0;
   radio_cca_t cca = RADIO_CCA_FREE;
   int8_t rssi;
 
@@ -155,9 +156,12 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   // fill the payload
   for(i = 0; i< datalength; i++){
     TxBuffer[TX_HEADER_LEN + i] = msg[i];
+    checksum += (int)msg[i] % 10;
   }
-  Serial.print("sendsize: ");
-  Serial.println(i);
+  checksum %= 10;
+  TxBuffer[2] = checksum;
+  Serial.print("checksum: ");
+  Serial.println(checksum);
   pkt_len = TX_HEADER_LEN + i;
   // fill the software fcs
   if(TX_SOFT_FCS){
@@ -234,6 +238,17 @@ uint8_t* pkt_Rx(uint8_t len, uint8_t* frm, uint8_t lqi, uint8_t crc_fail){
       return RxBuffer;
     }
   }
+  //checksum checked
+  uint8_t checksum = 0;
+  for(uint8_t i=TX_HEADER_LEN;i<len-4;i++){
+    checksum += (int)frm[i] % 10;
+  }
+  checksum %= 10;
+  if(frm[2] != checksum){
+    Serial.println("checksum failed");
+    return RxBuffer;
+  }
+  
   // send software ack
   if(frm[0] & 0x20){
     softACK[2] = frm[2];
