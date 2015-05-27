@@ -200,31 +200,57 @@ int DSR::get_reply(DsrPacket * pkt )
 	
 	***/	
 }
+DsrPacket DSR::send_normal(DsrPacket pkt){
+	DsrPacket send;
+	
+	length=pkt->length;
+	memset(send.route, 0, sizeof(int)*ROUTE_NO);
+	for(int i=0;i<length;i++)
+		route[i] = pkt->route[i];
+		
+	send.dest_id = _dest;
+	send.req_id = pkt->req_id;
+	send.type = 0;
+	for (int i = 0; i < length; ++i){
+		send.route[i] = route[i];	
+	}
 
+	send.length = length;
+	memset(route, 0, sizeof(int)*ROUTE_NO);
+	length =0;
+	return send;
+}
 void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 {
+	
+	for(int i=0;i<10;i++)cout<<rrep_route[i]<<" ";
+		cout<<endl; 
 
-	int tmp;
 	int cnt = 0;
+	int route [RECORD_SIZE] ;
+	memset(route, 0, sizeof(int)*RECORD_SIZE);
+	
 	while(rrep_route[cnt] != 0)
 		cnt++;
 	// cnt = route's length 
-
-	tmp = rrep_route[0] ;
-	for(int i = 0; i<cnt-1; i++)
-		rrep_route[i]=rrep_route[i+1] ;
-
-
-	rrep_route[cnt-1] =tmp;
+	for(int i = 0; i<cnt; i++){
+			route[i]=rrep_route[cnt-1-i] ;
+	}
+	
+	
+	
+	// for(int i=0;i<10;i++)cout<<route[i]<<" ";
+	// 	cout<<endl; 
+		
 	for(int i = 0; i<cnt; i++)
 	{
-		if( cache[0][rrep_route[cnt]] == 0 ) //no route to node tmp
+		if( cache[0][route[i]] == 0 ) //no route to node tmp
 			{
 			for(int j = 0; j <= i ; j++)
-				cache[j][rrep_route[cnt]] = rrep_route[j];
+				cache[j][route[i]] = route[j];
 			
 			for(int k = i+1 ; k<ROUTE_NO; k++)
-				cache[k][rrep_route[cnt]] = 0;
+				cache[k][route[i]] = 0;
 			}
 	}
 }
