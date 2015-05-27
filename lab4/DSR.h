@@ -2,8 +2,12 @@
 #define DSR_H
 
 #define ROUTE_NO 10
-#define RECORD_SIZE 10
+#define RECORD_SIZE 1000
+#define MOD_NUM 100000
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
+ 
 using namespace std;
 
 typedef struct dsr_packet{
@@ -70,7 +74,7 @@ class DSR {
 
 		DsrPacket send_request(int _dest);
 		int get_request(DsrPacket * pkt);
-		DsrPacket send_reply(int _dest);
+		DsrPacket send_reply();
 		int get_reply(DsrPacket * pkt);
 		DsrPacket send_normal(DsrPacket* pkt);
 		void update_cache(int *);	
@@ -132,7 +136,8 @@ DsrPacket DSR::send_request(int _dest){
 		send.src_id = route[0];
 	}
 	send.dest_id = _dest;
-	send.req_id = nodeid;
+	send.req_id = rand() % MOD_NUM;
+	//cout << "req_id is :" << send.req_id << endl;
 	send.type = 1;
 	for (int i = 0; i < length; ++i){
 		send.route[i] = route[i];	
@@ -146,13 +151,23 @@ DsrPacket DSR::send_request(int _dest){
 
 
 //RREP
-DsrPacket DSR::send_reply(int _dest){
+DsrPacket DSR::send_reply(){
 
+	
 	DsrPacket send;
 	int cnt = 0;
+	int _dest;
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
 	
-	
+	_dest = route[0];
+	for(int i=1; i<length; i++)
+	{
+		if(route[i]==nodeid)
+			break;
+		else
+		    _dest = route[i];
+	}	
+		
 	send.dest_id = _dest;
 	send.req_id = nodeid;
 	send.type = 2;
