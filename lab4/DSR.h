@@ -80,10 +80,11 @@ yes return 2 ,no append and return 1
 }
 
 
-
-
-DsrPacket DSR::send_request(int _dest){
+DsrPacket DSR::send_request(int _dest, int * route , int length){
 	DsrPacket send;
+	
+	memset(send.route, 0, sizeof(int)*ROUTE_NO);
+
 	if(route[0] == 0){
 		send.src_id = nodeid;
 	}else{
@@ -92,13 +93,16 @@ DsrPacket DSR::send_request(int _dest){
 	send.dest_id = _dest;
 	send.req_id = nodeid;
 	send.type = 1;
-	for (int i = 0; i < ROUTE_NO; ++i){
-		send.route[i] = 0;	
+	for (int i = 0; i < length; ++i){
+		send.route[i] = route[i];	
 	}
+	send.length = length;
 	return send;
 }
+
+
 //RREP
-DsrPacket DSR::send_reply(int _dest , int * route){
+DsrPacket DSR::send_reply(int _dest , int * route ,int length){
 
 	DsrPacket send;
 	int cnt = 0;
@@ -109,11 +113,10 @@ DsrPacket DSR::send_reply(int _dest , int * route){
 	send.req_id = nodeid;
 	send.type = 2;
 	
-	while(route[cnt] != 0 && cnt < ROUTE_NO)
-	{	
-		send.route[cnt] = route[cnt];
-		cnt++;
-	}
+	for(int i=0; i<length; i++ )
+		send.route[i] = route[i];
+	
+	send.length = length;
 		
 	/***
 	send_reply need target's id and the route attach to  packet
