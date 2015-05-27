@@ -77,6 +77,7 @@ class DSR {
 		DsrPacket send_reply();
 		int get_reply(DsrPacket * pkt);
 		DsrPacket send_normal(DsrPacket* pkt);
+		int in_cache(int dest);
 		void update_cache(int *);	
 		void depkt(char * pkt);
 };
@@ -86,6 +87,17 @@ rreq
 1: success
 0: has route, fail
 */
+
+int DSR::in_cache(int dest)
+{
+
+	if(cache[0][dest] == 0)  //not in cache
+		return 0;
+	else 
+		return 1;
+
+}
+
 int DSR::get_request(DsrPacket * pkt)
 {
 	//check whether request id exist
