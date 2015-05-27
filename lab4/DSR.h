@@ -2,13 +2,14 @@
 #define DSR_H
 
 #define ROUTE_NO 10
-
+#define RECORD_SIZE 10
 typedef struct dsr_packet{
   int type;// RREQ: 1, RREP: 2, RERR:3 
   int src_id;
   int dest_id;
   int req_id;
   int route[ROUTE_NO];
+  int length;
 } DsrPacket;
 
 class DSR {
@@ -17,11 +18,15 @@ class DSR {
 			
 		int nodeid;	//source id
 		int req_id;
-		int route[ROUTE_NO] ;
+		int route[ROUTE_NO] ; //for record the route she got
 		int cache[ROUTE_NO][ROUTE_NO] ;
+		int req_record[RECORD_SIZE]; 
+		int record_leng;
 		
 		DSR(int NODE_ID){
-		  nodeid = NODE_ID; 
+		  nodeid = NODE_ID;
+		  record_leng=0;		  
+		  memset(req_record, 0, sizeof(int)*RECORD_SIZE);
 		  memset(route, 0, sizeof(int)*ROUTE_NO);
 		  memset(cache, 0, sizeof(int)*ROUTE_NO*ROUTE_NO);
 		} // src
@@ -30,10 +35,6 @@ class DSR {
 		int get_request();
 		DsrPacket send_reply();
 		int get_reply();
-
-		void assign_route(int *);
-		void route_append(int * , int );
-		void route_reverse( int *);
 		void update_cache(int *);	
 		void depkt(char * pkt);
 };
@@ -43,33 +44,43 @@ rreq
 1: success
 0: has route, fail
 */
-int DSR::get_request(int _src, int _des, int _req, int _route[]){
-  //check if route exist
-  /*
-  if(route[0] != 0){
-  	return 0;
-  }
-  */ 
+int DSR::get_request(DsrPacket * pkt)
+{
 
-  //check if dest
-  if(_des == nodeid){
-  	return 2;
-  }
-  //TODO check if already forward
+  for(int i=0; i<record_leng; i++)
+	if(pkt->req_id == req_record[i])
+		return 0;
+  
+  for(int i=0 ; i < pkt->length; i++)
+	route[i] = pkt->route[i];
 
-
-  //append in order to broadcast
-  int i;
-  for (i = 0; i < ROUTE_NO; ++i){
-  	if(route[i] == 0){
-  		break;
-  	}else{
-  		route[i]=_route[i];
-  	}
+  if( pkt->dest_id == nodeid )  // u got it!!!!
+	{
+		
+		req_record[record_leng] = pkt->req_id;
+		record_leng++ ;
+		return 2 ;                  //time to send reply
+	}
+  else                          // u got a broadcast ,please append and just rebroadcast
+  {
+	route[ pkt->length] = nodeid;
+	req_record[record_leng] = pkt->req_id;
+	record_leng++ ;
+	return 1
   }
-  route[i+1] = nodeid;
-  return 1;
+
+/***
+first check if the req has been here,
+then check is this node target?
+yes return 2 ,no append and return 1
+
+***/  
+  
+  
 }
+
+
+
 
 DsrPacket DSR::send_request(int _dest){
 	DsrPacket send;
@@ -186,10 +197,8 @@ void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 }
 /***
 ex:  S DSR object get rrep_packet 
-
 S ask D and she get reply  D,C,A 
 so she can update S->A ,S->C ,S->D
-
   S  A  B  C  D  E
 ------------------------
   0 |A| 0 |A||A| 0
@@ -200,8 +209,6 @@ so she can update S->A ,S->C ,S->D
 ------------------------
   0  0  0  0  0  0
 ------------------------
-
-
 ***/
 
 
