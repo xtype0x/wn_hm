@@ -11,7 +11,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 
 #define NODE_ID 0x0001  // node id of this node. change it with different boards
 
-#define CHANNEL 23     // check correspond frequency in SpectrumAnalyzer
+#define CHANNEL 22     // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
 #define TX_SOFT_ACK 0   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
@@ -61,7 +61,9 @@ void setup()
   ZigduinoRadio.attachReceiveFrame(pkt_Rx);
   
   if(NODE_ID == 0x0001){
-    pkt = node.source(4);
+    pkt = node.source(20);
+    Serial.println("send type: ");
+    Serial.println(pkt.type);
     packet_send(pkt,0xffff);
   }
 }
@@ -72,28 +74,41 @@ void loop()
   uint8_t inbyte;
   uint8_t inhigh;
   uint8_t inlow;
-  
-  if(NODE_ID == 0x0001 && flag && t1 == 0 && ping_cnt < 100){
-    ping();
-    ping_cnt++;
+  delay(100);
+  if(NODE_ID == 0x0001){
+    pkt = node.source(20);
+    packet_send(pkt,0xffff);
   }
-  if(millis() - start > 10000){
-    Serial.println("Success rate:");
-    Serial.println(success_ping*100/ping_cnt);
-  }
+//  if(NODE_ID == 0x0001 && flag && t1 == 0 && ping_cnt < 100){
+//    ping();
+//    ping_cnt++;
+//  }
+//  if(millis() - start > 1000){
+//    if(flag){
+//    Serial.println("Success rate:");
+//    Serial.println(success_ping*100/ping_cnt);
+//    start = millis();
+//    }else if(NODE_ID == 0x0001){
+//    pkt = node.source(20);
+//    packet_send(pkt,0xffff);
+//    }
+//  }
   //char txData[80]={};
   //memcpy(txData,&pkt,sizeof(pkt));
   
   if(has_RX()){
-    //Serial.println();
-    //Serial.print("Rx: ");
+    Serial.println();
+    Serial.print("Rx: ");
     char dataBuffer[256]={};
     for(uint8_t i=TX_HEADER_LEN;i<RX_pkt_len-4;i++){
       dataBuffer[i-TX_HEADER_LEN] = RxBuffer[i]; 
     }
     DsrPacket *rxpkt = (DsrPacket*) dataBuffer;
     pkt = node.get_packet(rxpkt);
-    switch(pkt.type != 0){
+    Serial.print("get type: ");
+    Serial.println(pkt.type);
+    Serial.print("src_id: ");Serial.println(pkt.src_id);
+    switch(pkt.type){
       case 1:
         Serial.println("RREQ Send~");
         packet_send(pkt,0xffff);
@@ -112,7 +127,7 @@ void loop()
         }else{
           int target = node.in_cache(pkt.dest_id);
           if(target != 0){
-            packet_send(target,pkt);
+            packet_send(pkt,target);
           }
         }
         break;
@@ -370,5 +385,5 @@ void ping(){
   pkt = node.ping(20);
   int dest = node.in_cache(20);
   if(dest!=0)
-    packet_send(dest,pkt);
+    packet_send(pkt,dest);
 }
