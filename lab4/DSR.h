@@ -4,14 +4,14 @@
 #define ROUTE_NO 10
 #define RECORD_SIZE 1000
 #define MOD_NUM 100000
-#include <iostream>
-#include <cstring>
+//#include <iostream>
+#include <string.h>
 #include <cstdlib>
  
 using namespace std;
 
 typedef struct dsr_packet{
-  int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3 
+  int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3, PING 4
   int src_id;
   int dest_id;
   int req_id;
@@ -30,13 +30,14 @@ class DSR {
 		int length;
 
 		int cache[ROUTE_NO][ROUTE_NO] ;
-		int req_record[RECORD_SIZE]; 
+
+		int src_record[RECORD_SIZE]; 
 		int record_leng;
 		
 		DSR(int NODE_ID){
 		  nodeid = NODE_ID;
 		  record_leng=0;
-		  memset(req_record, 0, sizeof(int)*RECORD_SIZE);
+		  memset(src_record, 0, sizeof(int)*RECORD_SIZE);
 		  memset(route, 0, sizeof(int)*ROUTE_NO);
 		  length = 0;
 		  memset(cache, 0, sizeof(int)*ROUTE_NO*ROUTE_NO);
@@ -89,26 +90,23 @@ int DSR::get_request(DsrPacket * pkt)
 {
 	//check whether request id exist
   for(int i=0; i<record_leng; i++)
-		if(pkt->req_id == req_record[i])
+		if(pkt->src_id == src_record[i])
 			return 0;
   length = pkt->length;
   for(int i=0 ; i < pkt->length; i++){
   	if(pkt->route[i] == nodeid)return 0;
 		route[i] = pkt->route[i];
   }
+	src_record[record_leng] = pkt->src_id;
+	record_leng++ ;
 
   if( pkt->dest_id == nodeid )  // u got it!!!!
 	{
-		
-		req_record[record_leng] = pkt->req_id;
-		record_leng++ ;
 		return 2 ;                  //time to send reply
 	}
   else                          // u got a broadcast ,please append and just rebroadcast
   {
 	//route[ pkt->length] = nodeid;
-	req_record[record_leng] = pkt->req_id;
-	record_leng++ ;
 	//length++;
 	return 1;
   }
