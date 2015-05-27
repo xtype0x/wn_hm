@@ -87,14 +87,27 @@ DsrPacket DSR::send_request(int _dest){
 	return send;
 }
 //RREP
-DsrPacket DSR::send_reply(){
+DsrPacket DSR::send_reply(int _dest , int * route){
+
 	DsrPacket send;
+	int cnt = 0;
+	memset(send.route, 0, sizeof(int)*ROUTE_NO);
+	
+	
 	send.dest_id = _dest;
 	send.req_id = nodeid;
 	send.type = 2;
-	for (int i = 0; i < ROUTE_NO; ++i){
-		send.route[i] = 0;	
+	
+	while(route[cnt] != 0 && cnt < ROUTE_NO)
+	{	
+		send.route[cnt] = route[cnt];
+		cnt++;
 	}
+		
+	/***
+	send_reply need target's id and the route attach to  packet
+	***/
+		
 	return send;	
 }
 
