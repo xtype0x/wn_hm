@@ -2,8 +2,12 @@
 #define DSR_H
 
 #define ROUTE_NO 10
-#define RECORD_SIZE 10
+#define RECORD_SIZE 1000
+#define MOD_NUM 100000
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
+ 
 using namespace std;
 
 typedef struct dsr_packet{
@@ -101,7 +105,8 @@ DsrPacket DSR::send_request(int _dest){
 		send.src_id = route[0];
 	}
 	send.dest_id = _dest;
-	send.req_id = nodeid;
+	send.req_id = rand() % MOD_NUM;
+	//cout << "req_id is :" << send.req_id << endl;
 	send.type = 1;
 	for (int i = 0; i < length; ++i){
 		send.route[i] = route[i];	
@@ -123,7 +128,7 @@ DsrPacket DSR::send_reply(int _dest){
 	
 	
 	send.dest_id = _dest;
-	send.req_id = nodeid;
+	send.req_id = rand() % MOD_NUM;
 	send.type = 2;
 	
 	for(int i=0; i<length; i++ ){
