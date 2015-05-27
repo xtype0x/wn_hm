@@ -11,7 +11,7 @@
 using namespace std;
 
 typedef struct dsr_packet{
-  int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3, PING 4
+  int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3, PING: 4, FINISH RREQ: 5
   int src_id;
   int dest_id;
   int req_id;
@@ -46,6 +46,14 @@ class DSR {
 		DsrPacket source(int dest){
 			return send_request(dest);
 		}
+		DsrPacket ping(int dest){
+			DsrPacket send;
+			send.type = 4;
+			send.src_id = nodeid;
+			send.dest_id = dest;
+			send.req_id = nodeid;
+			return send;
+		}
 		DsrPacket get_packet(DsrPacket * pkt){
 			DsrPacket send;
 			if(pkt->type == 1){
@@ -62,11 +70,21 @@ class DSR {
 			}else if(pkt->type == 2){
 				get_reply(pkt);
 				if(pkt->src_id != nodeid){	
-
 					send = send_reply();
 					send.src_id = pkt->src_id;
 					return send;
 				}
+				send.type = 5;
+			}else if(pkt->type == 4){
+				send.type = 4;
+				send.req_id = pkt->req_id;
+				send.dest_id = pkt->dest_id;
+				send.src_id = pkt->src_id;
+				if(pkt->dest_id == nodeid && pkt->req_id != nodeid){
+					send.dest_id = pkt->src_id;
+					send.src_id = nodeid;
+				}
+				return send;
 			}
 			send.type = 0;
 			return send;
