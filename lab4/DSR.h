@@ -44,7 +44,7 @@ class DSR {
 		~DSR(){}
 		DsrPacket send_request(int _dest);
 		int get_request(DsrPacket * pkt);
-		DsrPacket send_reply(int _dest);
+		DsrPacket send_reply();
 		int get_reply(DsrPacket * pkt);
 		void update_cache(int *);	
 		void depkt(char * pkt);
@@ -120,15 +120,25 @@ DsrPacket DSR::send_request(int _dest){
 
 
 //RREP
-DsrPacket DSR::send_reply(int _dest){
+DsrPacket DSR::send_reply(){
 
+	
 	DsrPacket send;
 	int cnt = 0;
+	int _dest;
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
 	
-	
+	_dest = route[0];
+	for(int i=1; i<length; i++)
+	{
+		if(route[i]==nodeid)
+			break;
+		else
+		    _dest = route[i];
+	}	
+		
 	send.dest_id = _dest;
-	send.req_id = rand() % MOD_NUM;
+	send.req_id = nodeid;
 	send.type = 2;
 	
 	for(int i=0; i<length; i++ ){
@@ -137,8 +147,9 @@ DsrPacket DSR::send_reply(int _dest){
 	if(nodeid == _dest){
 		send.route[length] = nodeid;
 		//cout<<length<<"ff"<<endl;
-		send.length = ++length;
+		length++;
 	}
+	send.length = length;
 	/***
 	send_reply need target's id and the route attach to  packet
 	***/
