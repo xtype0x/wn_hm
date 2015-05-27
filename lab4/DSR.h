@@ -42,6 +42,7 @@ class DSR {
 		int get_request(DsrPacket * pkt);
 		DsrPacket send_reply(int _dest);
 		int get_reply(DsrPacket * pkt);
+		DsrPacket send_normal(DsrPacket* pkt);
 		void update_cache(int *);	
 		void depkt(char * pkt);
 };
@@ -170,7 +171,7 @@ int DSR::get_reply(DsrPacket * pkt )
 	
 	***/	
 }
-DsrPacket DSR::send_normal(DsrPacket pkt){
+DsrPacket DSR::send_normal(DsrPacket* pkt){
 	DsrPacket send;
 	
 	length=pkt->length;
@@ -178,7 +179,7 @@ DsrPacket DSR::send_normal(DsrPacket pkt){
 	for(int i=0;i<length;i++)
 		route[i] = pkt->route[i];
 		
-	send.dest_id = _dest;
+	send.dest_id = pkt->dest_id;
 	send.req_id = pkt->req_id;
 	send.type = 0;
 	for (int i = 0; i < length; ++i){
