@@ -59,9 +59,8 @@ class DSR {
 						return send;
 				}
 			}else if(pkt->type == 2){
-				if(pkt->src_id != nodeid){
-					
-					get_reply(pkt);
+				get_reply(pkt);
+				if(pkt->src_id != nodeid){	
 
 					send = send_reply();
 					send.src_id = pkt->src_id;
