@@ -7,7 +7,7 @@
 using namespace std;
 
 typedef struct dsr_packet{
-  int type;// RREQ: 1, RREP: 2, RERR:3 
+  int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3 
   int src_id;
   int dest_id;
   int req_id;
@@ -38,6 +38,36 @@ class DSR {
 		  memset(cache, 0, sizeof(int)*ROUTE_NO*ROUTE_NO);
 		} // src
 		~DSR(){}
+		DsrPacket source(int dest){
+			return send_request(dest);
+		}
+		DsrPacket get_packet(DsrPacket * pkt){
+			DsrPacket send;
+			if(pkt->type == 1){
+				switch(get_request(pkt)){
+					case 0:
+						break;
+					case 1:
+					  return send_request(pkt->dest_id);
+					case 2:
+						send = send_reply(pkt->dest_id);
+						send.src_id = pkt->src_id;
+						return send;
+				}
+			}else if(pkt->type == 2){
+				if(pkt->src_id != nodeid){
+					
+					get_reply(pkt);
+
+					send = send_reply(pkt->dest_id);
+					send.src_id = pkt->src_id;
+					return send;
+				}
+			}
+			send.type = 0;
+			return send;
+		}
+
 		DsrPacket send_request(int _dest);
 		int get_request(DsrPacket * pkt);
 		DsrPacket send_reply(int _dest);
@@ -132,8 +162,9 @@ DsrPacket DSR::send_reply(int _dest){
 	if(nodeid == _dest){
 		send.route[length] = nodeid;
 		//cout<<length<<"ff"<<endl;
-		send.length = ++length;
+		length++;
 	}
+	send.length = length;
 	/***
 	send_reply need target's id and the route attach to  packet
 	***/
@@ -146,7 +177,6 @@ int DSR::get_reply(DsrPacket * pkt )
 {
 	length=pkt->length;
 	int for_update_route[ROUTE_NO];
-	
 	memset(for_update_route, 0, sizeof(int)*ROUTE_NO);
 	// cnt is route's length
 	for(int i=0;i<length;i++){
@@ -186,8 +216,6 @@ void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 
 
 	rrep_route[cnt-1] =tmp;
-	for(int i=0;i<10;i++)cout<<rrep_route[i]<<" ";
-		cout<<endl; 
 	for(int i = 0; i<cnt; i++)
 	{
 		if( cache[0][rrep_route[cnt]] == 0 ) //no route to node tmp

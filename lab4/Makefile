@@ -1,2 +1,2 @@
 all:
-	g++ -O3 test_dsr.cpp -o test_dsr
+	g++ -O2 test_dsr.cpp -o test_dsr
