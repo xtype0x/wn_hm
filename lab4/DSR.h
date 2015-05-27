@@ -54,7 +54,7 @@ class DSR {
 					case 1:
 					  return send_request(pkt->dest_id);
 					case 2:
-						send = send_reply(pkt->dest_id);
+						send = send_reply();
 						send.src_id = pkt->src_id;
 						return send;
 				}
@@ -63,7 +63,7 @@ class DSR {
 					
 					get_reply(pkt);
 
-					send = send_reply(pkt->dest_id);
+					send = send_reply();
 					send.src_id = pkt->src_id;
 					return send;
 				}
