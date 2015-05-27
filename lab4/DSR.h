@@ -98,8 +98,30 @@ DsrPacket DSR::send_reply(){
 	return send;	
 }
 
-int DSR::get_reply(){
-
+int DSR::get_reply(DsrPacket * pkt )
+{
+	int cnt=0;
+	int for_update_route[ROUTE_NO];
+	
+	memset(update_cache, 0, sizeof(int)*ROUTE_NO);
+	while( pkt->route[cnt]!= 0)
+		cnt++;
+	// cnt is route's length
+	for(int i=0; i<cnt ; i++ )
+	{
+		if( nodeid == pkt->route[cnt-i] )
+			break;
+		for_update_route[i] = pkt->route[cnt-i] ;
+	}
+	update_cache(for_update_route);
+	
+	/***
+	
+	DSR has route S->A->C->D
+	
+	if A get reply from D the reply will be D->C
+	
+	***/	
 }
 
 
