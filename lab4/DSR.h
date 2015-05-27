@@ -170,7 +170,26 @@ int DSR::get_reply(DsrPacket * pkt )
 	
 	***/	
 }
+DsrPacket DSR::send_normal(DsrPacket pkt){
+	DsrPacket send;
+	
+	length=pkt->length;
+	memset(send.route, 0, sizeof(int)*ROUTE_NO);
+	for(int i=0;i<length;i++)
+		route[i] = pkt->route[i];
+		
+	send.dest_id = _dest;
+	send.req_id = pkt->req_id;
+	send.type = 0;
+	for (int i = 0; i < length; ++i){
+		send.route[i] = route[i];	
+	}
 
+	send.length = length;
+	memset(route, 0, sizeof(int)*ROUTE_NO);
+	length =0;
+	return send;
+}
 void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 {
 	
