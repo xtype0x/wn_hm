@@ -34,7 +34,7 @@ class DSR {
 		void assign_route(int *);
 		void route_append(int * , int );
 		void route_reverse( int *);
-				
+		void update_cache(int *);	
 		void depkt(char * pkt);
 };
 /*
@@ -122,5 +122,51 @@ void DSR::route_append()
 	route[i+1] = -1 ;
 	
 }
+void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
+{
+	
+	int tmp;
+	int cnt = 0;
+	while(rrep_route[cnt] != 0)
+		cnt++;
+	// cnt = route's length 
+
+	tmp = rrep_route[0] ;
+	for(int i = 0; i<cnt-1; i++)
+		rrep_route[i]=rrep_route[i+1] ;
+	rrep_route[cnt-1] =tmp;
+	
+	for(int i = 0; i<cnt; i++)
+	{
+		if( cache[0][rrep_route[cnt]] == 0 ) //no route to node tmp
+			{
+			for(int j = 0; j <= i ; j++)
+				cache[j][rrep_route[cnt]] = rrep_route[j];
+			
+			for(int k = i+1 ; k<ROUTE_NO; k++)
+				cache[k][rrep_route[cnt]] = 0;
+			}
+	}
+}
+/***
+ex:  S DSR object get rrep_packet 
+
+S ask D and she get reply  D,C,A 
+so she can update S->A ,S->C ,S->D
+
+  S  A  B  C  D  E
+------------------------
+  0 |A| 0 |A||A| 0
+------------------------
+  0  0  0 |C||C| 0
+------------------------
+  0  0  0  0 |D| 0 
+------------------------
+  0  0  0  0  0  0
+------------------------
+
+
+***/
+
 
 #endif
