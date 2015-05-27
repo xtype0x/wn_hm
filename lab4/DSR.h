@@ -159,6 +159,7 @@ DsrPacket DSR::send_reply(){
 	int _dest;
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
 	
+	int i;
 	_dest = route[0];
 	for(int i=1; i<length; i++)
 	{
@@ -166,6 +167,10 @@ DsrPacket DSR::send_reply(){
 			break;
 		else
 		    _dest = route[i];
+	}
+	if(i == length){
+		route[length] = nodeid;
+		length++;
 	}	
 		
 	send.dest_id = _dest;
@@ -174,11 +179,6 @@ DsrPacket DSR::send_reply(){
 	
 	for(int i=0; i<length; i++ ){
 		send.route[i] = route[i];
-	}
-	if(nodeid == _dest){
-		send.route[length] = nodeid;
-		//cout<<length<<"ff"<<endl;
-		length++;
 	}
 	send.length = length;
 	/***
