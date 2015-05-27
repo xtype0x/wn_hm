@@ -117,19 +117,27 @@ void DSR::route_append()
 }
 void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 {
-	int tmp = 0;
-	while(rrep_route[tmp] != 0)
-		tmp++;
 	
-	for(int i = 0; i<tmp; i++)
+	int tmp;
+	int cnt = 0;
+	while(rrep_route[cnt] != 0)
+		cnt++;
+	// cnt = route's length 
+
+	tmp = rrep_route[0] ;
+	for(int i = 0; i<cnt-1; i++)
+		rrep_route[i]=rrep_route[i+1] ;
+	rrep_route[cnt-1] =tmp;
+	
+	for(int i = 0; i<cnt; i++)
 	{
-		if( cache[0][rrep_route[tmp]] == 0 ) //no route to node tmp
+		if( cache[0][rrep_route[cnt]] == 0 ) //no route to node tmp
 			{
 			for(int j = 0; j <= i ; j++)
-				cache[j][rrep_route[tmp]] = rrep_route[j];
+				cache[j][rrep_route[cnt]] = rrep_route[j];
 			
 			for(int k = i+1 ; k<ROUTE_NO; k++)
-				cache[k][rrep_route[tmp]] = 0;
+				cache[k][rrep_route[cnt]] = 0;
 			}
 	}
 }
@@ -141,11 +149,11 @@ so she can update S->A ,S->C ,S->D
 
   S  A  B  C  D  E
 ------------------------
-  0 |D| 0 |D||D| 0
+  0 |A| 0 |A||A| 0
 ------------------------
-  0 |C| 0 |C| 0  0
+  0  0  0 |C||C| 0
 ------------------------
-  0 |A| 0  0  0  0 
+  0  0  0  0 |D| 0 
 ------------------------
   0  0  0  0  0  0
 ------------------------
