@@ -115,6 +115,7 @@ int DSR::get_reply(DsrPacket * pkt )
 	}
 	update_cache(for_update_route);
 	
+	return 0;
 	/***
 	
 	DSR has route S->A->C->D
