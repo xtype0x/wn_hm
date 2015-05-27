@@ -6,7 +6,6 @@
 #define MOD_NUM 100000
 //#include <iostream>
 #include <string.h>
-#include <cstdlib>
  
 using namespace std;
 
@@ -52,6 +51,9 @@ class DSR {
 			send.src_id = nodeid;
 			send.dest_id = dest;
 			send.req_id = nodeid;
+			memset(send.route,0,sizeof(int)*ROUTE_NO);
+			send.route[0] = nodeid;
+			send.length = 1;
 			return send;
 		}
 		DsrPacket get_packet(DsrPacket * pkt){
@@ -75,11 +77,17 @@ class DSR {
 					return send;
 				}
 				send.type = 5;
+				return send;
 			}else if(pkt->type == 4){
 				send.type = 4;
 				send.req_id = pkt->req_id;
 				send.dest_id = pkt->dest_id;
 				send.src_id = pkt->src_id;
+				send.length = pkt->length;
+				for (int i = 0; i < ROUTE_NO; ++i){
+					send.route[i]=pkt->route[i];
+				}
+				if(pkt->src_id == pkt->req_id)send.route[send.length++]=nodeid;
 				if(pkt->dest_id == nodeid && pkt->req_id != nodeid){
 					send.dest_id = pkt->src_id;
 					send.src_id = nodeid;

@@ -8,14 +8,14 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 #include <ZigduinoRadio.h>
 #include <string.h>
 
-#define NODE_ID 0x0003 // node id of this node. change it with different boards
+#define NODE_ID 0x0001 // node id of this node. change it with different boards
 #define CHANNEL 26      // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
 #define TX_SOFT_ACK 0   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
 #define TX_SOFT_FCS 1
 #define TX_RETRY 1      // pkt_Tx() retransmit packets if failed.
-#define TX_BACKOFF 100  // sleep time in ms
+#define TX_BACKOFF 1  // sleep time in ms
 #define TX_HEADER_LEN 9
 uint8_t TxBuffer[128]; // can be used as header and full pkt.
 uint8_t RxBuffer[128];
@@ -40,7 +40,9 @@ uint8_t RX_pkt_len;
 // the setup() function is called when Zigduino staets or reset
 void setup()
 {
-  pkt.type = 0;
+  pkt.type = 30;
+  pkt.id = 100;
+  strcpy(pkt.data,"ggyy hello");
   teststr[3] = '0' + NODE_ID;
   init_header();
   retry_c = 0;
@@ -67,14 +69,16 @@ void loop()
   uint8_t tx_suc;
   
   //ping();
-  
+  pkt.type = 123;
+  pkt.id = 432;
+  strcpy(pkt.data,"ggyy hello");
   //char txData[80]={};
   //memcpy(txData,&pkt,sizeof(pkt));
-  if(pkt.type != 0 && need_TX()){
+  if(NODE_ID == 0x0001 && need_TX()){
     delay(TX_BACKOFF);
     Serial.print("Tx: ");
     Serial.print(pkt.type);
-    tx_suc = pkt_Tx(0x0004,(char*) &pkt,sizeof(Packet));
+    tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(Packet));
     TX_available = 1;
   }
 
