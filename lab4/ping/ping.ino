@@ -7,24 +7,24 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 
 #include <ZigduinoRadio.h>
 
-#define NODE_ID 0x0004  // node id of this node. change it with different boards
-#define CHANNEL 26      // check correspond frequency in SpectrumAnalyzer
+#define NODE_ID 0x0001  // node id of this node. change it with different boards
+#define CHANNEL 25      // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
 #define TX_SOFT_ACK 0   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
 #define TX_SOFT_FCS 1
 #define TX_RETRY 1      // pkt_Tx() retransmit packets if failed.
-#define TX_BACKOFF 100  // sleep time in ms
+#define TX_BACKOFF 10  // sleep time in ms
 #define TX_HEADER_LEN 9
+#define TARGET 0x0004
 uint8_t TxBuffer[128]; // can be used as header and full pkt.
 uint8_t RxBuffer[128];
 uint8_t softACK[8];
-char teststr[] = "hello world!!";
 
 typedef struct packet{
   int type;
   int id;
-  char data[20];
+  unsigned long time;
 } Packet;
 
 uint8_t TX_available; // set to 1 if need a packet delivery, and use need_TX() to check  its value
@@ -33,10 +33,20 @@ uint8_t retry_c;
 uint8_t RX_available; // use has_RX() to check its value
 uint8_t RX_pkt_len;
 
+Packet pkt;
+int _route[5];
+int ping_cnt;
+int success_ping;
+int wait_ping;
+
 // the setup() function is called when Zigduino staets or reset
 void setup()
 {
-  teststr[3] = '0' + NODE_ID;
+  ping_cnt=0;
+  success_ping=0;
+  wait_ping=0;
+  for(int i=0;i<5;i++)_route[i]=i+1;
+  
   init_header();
   retry_c = 0;
   TX_available = 1;
@@ -49,7 +59,7 @@ void setup()
 
   // register event handlers
   ZigduinoRadio.attachError(errHandle);
-  ZigduinoRadio.attachTxDone(onXmitDone);
+  //ZigduinoRadio.attachTxDone(onXmitDone);
   ZigduinoRadio.attachReceiveFrame(pkt_Rx);
 }
 
@@ -61,53 +71,90 @@ void loop()
   uint8_t inlow;
   uint8_t tx_suc;
   
-  //ping();
-
-  
-
-if(has_RX())
-  {
-    Serial.println();
-    Serial.print(RX_pkt_len);
-    Serial.print("Rx: ");
-//    for(uint8_t i=TX_HEADER_LEN;i<RX_pkt_len-4;i++){
-//      inbyte = RxBuffer[i];
-//      if(printable(inbyte)){
-//        Serial.write(inbyte);
-//      }else{
-//        Serial.print(".");
-//      }
-//      /* for printing bytes in hex
-//      Serial.print("[");
-//      inhigh = inbyte/16;
-//      inlow = inbyte%16;
-//      Serial.write(inhigh>9?'A'+inhigh-10:'0'+inhigh);
-//      Serial.write(inlow>9?'A'+inlow-10:'0'+inlow);
-//      Serial.print("] ");
-//      */
-//    }
+  //ping
+  if(NODE_ID == 0x0001 && ping_cnt < 100){
+    pkt.type = 0;
+    pkt.id = ++ping_cnt;
+    pkt.time = millis();
+    Serial.print("ping send: ");Serial.println(ping_cnt);
+    if(need_TX()){
+      delay(TX_BACKOFF);
+      tx_suc = pkt_Tx(0x0002,(char*) &pkt,sizeof(Packet));
+      TX_available = 1;
+    }
+  }
+  if(wait_ping == 1000){
+    Serial.print("Success rate: ");Serial.print(success_ping);Serial.println("%");
+  }
+  if(wait_ping < 1100)
+    wait_ping++;
+  if(has_RX()){
+    //Serial.println("Rx: ");
+    
     char dataBuffer[256]={};
     for(uint8_t i=TX_HEADER_LEN;i<RX_pkt_len-4;i++){
       dataBuffer[i-TX_HEADER_LEN] = RxBuffer[i]; 
     }
     Packet *rxpkt = (Packet*) dataBuffer;
-    Serial.print("type:");
-    Serial.print(rxpkt->type);
-    Serial.print(", id:");
-    Serial.print(rxpkt->id);
-    Serial.print(", data:");
-    Serial.println(rxpkt->data);
-    
-    Serial.println();
-    Serial.print("LQI: ");
-    Serial.print(ZigduinoRadio.getLqi(), 10);
-    Serial.print(", RSSI: ");
-    Serial.print(ZigduinoRadio.getLastRssi(), 10);
-    Serial.print(" dBm, ED: ");
-    Serial.print(ZigduinoRadio.getLastEd(), 10);
-    Serial.println("dBm");
+    // Serial.print("type:");
+    // Serial.print(rxpkt->type);
+    // Serial.print(", id:");
+    // Serial.println(rxpkt->id);
+    int index;
+    if(rxpkt->type == 0){
+      wait_ping = 0;
+      pkt.type = rxpkt->type;
+      pkt.id = rxpkt->id;
+      pkt.time = rxpkt->time;
+      for(index=0; index<5; index++){
+        if(NODE_ID == _route[index]){
+          break;
+        }
+      }
+      Serial.println(_route[index]);
+      if(_route[index] == TARGET){
+        pkt.type = 1;
+        Serial.print("ping dest: ");Serial.println(pkt.id);
+        if(need_TX()){
+          delay(TX_BACKOFF);
+          tx_suc = pkt_Tx(_route[index-1],(char*) &pkt,sizeof(Packet));
+          TX_available = 1;
+        }
+      }else{
+        Serial.print("ping continue: ");Serial.println(pkt.id);
+        if(need_TX()){
+          delay(TX_BACKOFF);
+          tx_suc = pkt_Tx(_route[index+1],(char*) &pkt,sizeof(Packet));
+          TX_available = 1;
+        }
+      }
+    }else if(rxpkt->type == 1){
+      wait_ping = 0;
+      if(NODE_ID == 0x0001){
+        Serial.print("ping get: ");Serial.println(rxpkt->id);
+        Serial.print("RTT: ");Serial.print(millis() - rxpkt->time);Serial.println(" ms");
+        success_ping++;
+//        if(rxpkt->id == 100){
+//          Serial.print("Success rate: ");Serial.print(success_ping);Serial.println("%");
+//        }
+      }else{
+        pkt.type = rxpkt->type;
+        pkt.id = rxpkt->id;
+        pkt.time = rxpkt->time;
+        for(index=0; index<5; index++){
+          if(NODE_ID == _route[index]){
+            break;
+          }
+        }
+        Serial.print("ping back: ");Serial.println(pkt.id);
+        if(need_TX()){
+          delay(TX_BACKOFF);
+          tx_suc = pkt_Tx(_route[index-1],(char*) &pkt,sizeof(Packet));
+          TX_available = 1;
+        }
+      }
+    }
   }
-  delay(100);
 }
 
 void init_header(){
@@ -163,8 +210,6 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   }
   checksum %= 10;
   TxBuffer[2] = checksum;
-  Serial.print("checksum: ");
-  Serial.println(checksum);
   pkt_len = TX_HEADER_LEN + i;
   // fill the software fcs
   if(TX_SOFT_FCS){
@@ -185,8 +230,8 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
         if(rssi == -91){
           ZigduinoRadio.txFrame(TxBuffer, pkt_len);
         }else{
-          Serial.print("ca fail with rssi = ");
-          Serial.println(rssi);
+          //Serial.print("ca fail with rssi = ");
+          //Serial.println(rssi);
         }
       }else{
         ZigduinoRadio.txFrame(TxBuffer, pkt_len);
@@ -202,8 +247,8 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
       if(rssi == -91){
         ZigduinoRadio.txFrame(TxBuffer, pkt_len);
       }else{
-        Serial.print("ca fail with rssi = ");
-        Serial.println(rssi);
+        //Serial.print("ca fail with rssi = ");
+        //Serial.println(rssi);
       }
     }else{
       ZigduinoRadio.txFrame(TxBuffer, pkt_len);
@@ -248,7 +293,7 @@ uint8_t* pkt_Rx(uint8_t len, uint8_t* frm, uint8_t lqi, uint8_t crc_fail){
   }
   checksum %= 10;
   if(frm[2] != checksum){
-    Serial.println("checksum failed");
+    //Serial.println("[Warning] checksum failed");
     return RxBuffer;
   }
   
@@ -325,20 +370,4 @@ void onXmitDone(radio_tx_done_t x)
     Serial.print("(CS busy)");
   }
   Serial.println();
-}
-
-void ping(){
-  Serial.println();
-  Serial.println("-- start ping --");
-  unsigned long t1 = millis(),t2;
-  //start ping
-  
-  delay(1234);
-  
-  //end ping
-  t2 = millis();
-  Serial.print("RTT: ");
-  Serial.print(t2-t1);
-  Serial.println("ms");
-  Serial.println("-- end ping --");
 }
