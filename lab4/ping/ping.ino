@@ -17,6 +17,7 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 #define TX_BACKOFF 10  // sleep time in ms
 #define TX_HEADER_LEN 9
 #define TARGET 0x0004
+#define WAIT_PING_TIME 1000
 uint8_t TxBuffer[128]; // can be used as header and full pkt.
 uint8_t RxBuffer[128];
 uint8_t softACK[8];
@@ -83,10 +84,10 @@ void loop()
       TX_available = 1;
     }
   }
-  if(wait_ping == 1000){
+  if(wait_ping == WAIT_PING_TIME){
     Serial.print("Success rate: ");Serial.print(success_ping);Serial.println("%");
   }
-  if(wait_ping < 1100)
+  if(wait_ping < WAIT_PING_TIME)
     wait_ping++;
   if(has_RX()){
     //Serial.println("Rx: ");

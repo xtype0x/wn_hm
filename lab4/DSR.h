@@ -10,12 +10,12 @@
 using namespace std;
 
 typedef struct dsr_packet{
+	int packet_id;
   int type;//DO_NOTHING:0, RREQ: 1, RREP: 2, RERR:3, PING: 4, FINISH RREQ: 5
   int src_id;
   int dest_id;
   int req_id;
   int route[ROUTE_NO];
-  int length;
 } DsrPacket;
 
 class DSR {
@@ -43,17 +43,22 @@ class DSR {
 		} // src
 		~DSR(){}
 		DsrPacket source(int dest){
-			return send_request(dest);
+			DsrPacket send = send_request(dest);
+			send.route[0] = nodeid;
+			return send;
 		}
-		DsrPacket ping(int dest){
+		DsrPacket ping(int dest,int pid = 0){
 			DsrPacket send;
 			send.type = 4;
 			send.src_id = nodeid;
 			send.dest_id = dest;
 			send.req_id = nodeid;
-			memset(send.route,0,sizeof(int)*ROUTE_NO);
+			send.packet_id = pid;
+			int target = route_index(dest);
+			for (int i = 0; i < ROUTE_NO; ++i){
+				send.route[i] = cache[target][i];
+			}
 			send.route[0] = nodeid;
-			send.length = 1;
 			return send;
 		}
 		DsrPacket get_packet(DsrPacket * pkt){
@@ -70,8 +75,8 @@ class DSR {
 						return send;
 				}
 			}else if(pkt->type == 2){
-				get_reply(pkt);
-				if(pkt->src_id != nodeid){	
+				
+				if(!get_reply(pkt)){	
 					send = send_reply();
 					send.src_id = pkt->src_id;
 					return send;
@@ -83,11 +88,11 @@ class DSR {
 				send.req_id = pkt->req_id;
 				send.dest_id = pkt->dest_id;
 				send.src_id = pkt->src_id;
-				send.length = pkt->length;
-				for (int i = 0; i < ROUTE_NO; ++i){
+				send.packet_id = pkt->packet_id;
+				int i;
+				for (i = 0; i < ROUTE_NO; ++i){
 					send.route[i]=pkt->route[i];
 				}
-				if(pkt->src_id == pkt->req_id)send.route[send.length++]=nodeid;
 				if(pkt->dest_id == nodeid && pkt->req_id != nodeid){
 					send.dest_id = pkt->src_id;
 					send.src_id = nodeid;
@@ -103,6 +108,7 @@ class DSR {
 		DsrPacket send_reply();
 		int get_reply(DsrPacket * pkt);
 		DsrPacket send_normal(DsrPacket* pkt);
+		int route_index(int dest);
 		int in_cache(int dest);
 		void update_cache(int *);	
 		void depkt(char * pkt);
@@ -123,21 +129,19 @@ int DSR::in_cache(int dest)
 		return cache[0][dest];
 
 }
-
 int DSR::get_request(DsrPacket * pkt)
 {
-	//check whether request id exist
-  for(int i=0; i<record_leng; i++)
-		if(pkt->src_id == src_record[i])
-			return 0;
-  length = pkt->length;
-  for(int i=0 ; i < pkt->length; i++){
-  	if(pkt->route[i] == nodeid)return 0;
+	int i;
+  for(i=0 ; i < ROUTE_NO; i++){
+  	//prevent duplicate
+  	if(pkt->route[i] == nodeid){
+  		memset(route, 0, sizeof(int)*ROUTE_NO);
+  		return 0;
+  	}
+  	if(pkt->route[i] == 0)break;
 		route[i] = pkt->route[i];
   }
-	src_record[record_leng] = pkt->src_id;
-	record_leng++ ;
-
+  route[i] = nodeid;
   if( pkt->dest_id == nodeid )  // u got it!!!!
 	{
 		return 2 ;                  //time to send reply
@@ -171,14 +175,13 @@ DsrPacket DSR::send_request(int _dest){
 		send.src_id = route[0];
 	}
 	send.dest_id = _dest;
-	send.req_id = rand() % MOD_NUM;
 	//cout << "req_id is :" << send.req_id << endl;
 	send.type = 1;
-	for (int i = 0; i < length; ++i){
+	int i;
+	for (i = 0; i < ROUTE_NO; ++i){
+		if(route[i]==0)break;
 		send.route[i] = route[i];	
 	}
-	send.route[length] = nodeid;
-	send.length = ++length;
 	memset(route, 0, sizeof(int)*ROUTE_NO);
 	length =0;
 	return send;
@@ -187,33 +190,18 @@ DsrPacket DSR::send_request(int _dest){
 
 //RREP
 DsrPacket DSR::send_reply(){
-
-	
 	DsrPacket send;
 	int cnt = 0;
-	int _dest;
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
-	
-	int i;
-	for(i=0; i<length; i++){
-		if(route[i]==nodeid)
-			break;
-		else
-		    _dest = route[i];
-	}
-	if(i == length){
-		route[length] = nodeid;
-		length++;
-	}	
-		
-	send.dest_id = _dest;
 	send.req_id = nodeid;
 	send.type = 2;
 	
-	for(int i=0; i<length; i++ ){
+	for(int i=0; i<ROUTE_NO; i++ ){
 		send.route[i] = route[i];
+		if(route[i] == nodeid){
+			send.dest_id = route[i-1];
+		}
 	}
-	send.length = length;
 	/***
 	send_reply need target's id and the route attach to  packet
 	***/
@@ -224,22 +212,38 @@ DsrPacket DSR::send_reply(){
 
 int DSR::get_reply(DsrPacket * pkt )
 {
-	length=pkt->length;
 	int for_update_route[ROUTE_NO];
 	memset(for_update_route, 0, sizeof(int)*ROUTE_NO);
 	// cnt is route's length
-	for(int i=0;i<length;i++){
+	for(int i=0;i<ROUTE_NO;i++){
 		route[i] = pkt->route[i];
 		
 	}
-	for(int i=0; i<length ; i++ )
-	{
-		if( nodeid == pkt->route[length-i-1] )
-			break;
-		for_update_route[i] = pkt->route[length-i-1] ;
+	// for(int i=0; i<length ; i++ )
+	// {
+	// 	if( nodeid == pkt->route[length-i-1] )
+	// 		break;
+	// 	for_update_route[i] = pkt->route[length-i-1] ;
+	// }
+	// update_cache(for_update_route);
+
+	//destination arrived
+	if(pkt->src_id == nodeid){
+		memset(route, 0, sizeof(int)*ROUTE_NO);
+		length =0;
+		//save in cache
+		if(route_index(pkt->dest_id) == -1){
+			for(int i=0;i<ROUTE_NO;i++){
+				if(cache[i][0] == 0){
+					for(int j=0;j<ROUTE_NO;j++){
+						cache[i][j] = pkt->route[j];
+					}
+					break;
+				}
+			}
+		}
+		return 1;
 	}
-	update_cache(for_update_route);
-	
 	return 0;
 	/***
 	
@@ -252,7 +256,6 @@ int DSR::get_reply(DsrPacket * pkt )
 DsrPacket DSR::send_normal(DsrPacket* pkt){
 	DsrPacket send;
 	
-	length=pkt->length;
 	memset(send.route, 0, sizeof(int)*ROUTE_NO);
 	for(int i=0;i<length;i++)
 		route[i] = pkt->route[i];
@@ -260,14 +263,25 @@ DsrPacket DSR::send_normal(DsrPacket* pkt){
 	send.dest_id = pkt->dest_id;
 	send.req_id = pkt->req_id;
 	send.type = 0;
-	for (int i = 0; i < length; ++i){
+	for (int i = 0; i < ROUTE_NO; ++i){
 		send.route[i] = route[i];	
 	}
 
-	send.length = length;
 	memset(route, 0, sizeof(int)*ROUTE_NO);
 	length =0;
 	return send;
+}
+
+int DSR::route_index(int target){
+	for(int i=0;i<ROUTE_NO;i++){
+		if(cache[i][0]==0)break;
+		for(int j=0;j<ROUTE_NO;j++){
+			if(cache[i][j] == 0)break;
+			if(cache[i][j] == target)
+				return i;
+		}
+	}
+	return -1;
 }
 
 void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
@@ -286,9 +300,6 @@ void DSR::update_cache(int * rrep_route) //check the necessary of reverse route
 	for(int i = 0; i<cnt; i++){
 			route[i]=rrep_route[cnt-1-i] ;
 	}
-	
-	
-	
 	// for(int i=0;i<10;i++)cout<<route[i]<<" ";
 	// 	cout<<endl; 
 		

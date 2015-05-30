@@ -11,14 +11,15 @@ Watch the Rx Zigduino output what you've input into the serial port of the Tx Zi
 
 #define NODE_ID 0x0001  // node id of this node. change it with different boards
 
-#define CHANNEL 22     // check correspond frequency in SpectrumAnalyzer
+#define CHANNEL 25     // check correspond frequency in SpectrumAnalyzer
 #define TX_TRY_TIMES 5  // if TX_RETRY is set, pkt_Tx() will try x times before success
 #define TX_DO_CARRIER_SENSE 1
 #define TX_SOFT_ACK 0   // only affect RX part(send ACK by hw/sw). TX still check ACK by  hardware in this code. modify libraries if necessary.
 #define TX_SOFT_FCS 1
 #define TX_RETRY 1      // pkt_Tx() retransmit packets if failed.
-#define TX_BACKOFF 100  // sleep time in ms
+#define TX_BACKOFF 10  // sleep time in ms
 #define TX_HEADER_LEN 9
+#define TARGET 0x0004
 uint8_t TxBuffer[128]; // can be used as header and full pkt.
 uint8_t RxBuffer[128];
 uint8_t softACK[8];
@@ -31,20 +32,21 @@ uint8_t RX_pkt_len;
 
 DsrPacket pkt;
 DSR node(NODE_ID);
-unsigned long t1,t2,start;
 int flag;
 int ping_cnt;
 int success_ping;
+int wait_ping;
+unsigned long t1[100];
 
 // the setup() function is called when Zigduino staets or reset
 void setup()
 {
   init_header();
-  start = millis();
-  t1 = 0;
+  memset(t1, 0, sizeof(unsigned long)*100);
   flag = 0;
   retry_c = 0;
   ping_cnt = 0;
+  wait_ping = 0;
   success_ping=0;
   TX_available = 1;
   RX_available = 1;
@@ -56,18 +58,9 @@ void setup()
   Serial.print("Node ID:");
   Serial.println(node.nodeid);
   // register event handlers
-  ZigduinoRadio.attachError(errHandle);
+  //ZigduinoRadio.attachError(errHandle);
   //ZigduinoRadio.attachTxDone(onXmitDone);
   ZigduinoRadio.attachReceiveFrame(pkt_Rx);
-//  if(NODE_ID == 0x0001){
-//    pkt = node.source(3);
-//    Serial.println(pkt.type);
-//    if(need_TX()){
-//      delay(TX_BACKOFF);
-//      uint8_t tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(DsrPacket));
-//      TX_available = 1;
-//    }
-//  }
 }
 
 // the function is always running
@@ -78,112 +71,103 @@ void loop()
   uint8_t inlow;
   uint8_t tx_suc;
   
-  delay(100);
-  if(NODE_ID == 0x0001 && !flag){
-    pkt = node.source(3);
-    //Serial.println(pkt.type);
+  if(NODE_ID == 0x0001 && node.route_index(TARGET) == -1){
+    delay(100);
+    pkt = node.source(TARGET);
     if(need_TX()){
+      Serial.print("Src send RREQ: id");Serial.println(TARGET);
       delay(TX_BACKOFF);
       tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(DsrPacket));
       TX_available = 1;
     }
-  }
-  if(NODE_ID == 0x0001 && flag && ping_cnt < 100){
-    
-    Serial.println();
-    Serial.println("-- start ping --");
-    
+  }else if(NODE_ID == 0x0001 && node.route_index(TARGET) != -1 && ping_cnt < 100){
     //start ping
-    t1 = millis();
-    pkt = node.ping(3);
-    int dest = node.in_cache(3);
-    if(dest!=0){
-      Serial.print("sendping: ");Serial.println(dest);
-      //packet_send(pkt,dest);
-      if(need_TX()){
-        delay(TX_BACKOFF);
-        tx_suc = pkt_Tx(dest,(char*) &pkt,sizeof(DsrPacket));
-        TX_available = 1;
-      }
+    //int dest = node.in_cache(TARGET);
+    pkt = node.ping(TARGET,ping_cnt);
+    t1[ping_cnt] = millis();
+    Serial.print("[");Serial.print(pkt.packet_id+1);Serial.print("]ping send: id");Serial.println(TARGET);
+    //packet_send(pkt,dest);
+    if(need_TX()){
+      delay(TX_BACKOFF);
+      tx_suc = pkt_Tx(pkt.route[1],(char*) &pkt,sizeof(DsrPacket));
+      TX_available = 1;
     }
     ping_cnt++;
   }
-//  if(millis() - start > 1000){
-//    if(flag){
-//    Serial.println("Success rate:");
-//    Serial.println(success_ping*100/ping_cnt);
-//    start = millis();
-//    }else if(NODE_ID == 0x0001){
-//    pkt = node.source(20);
-//    packet_send(pkt,0xffff);
-//    }
-//  }
-  //char txData[80]={};
-  //memcpy(txData,&pkt,sizeof(pkt));
-  
+  if(NODE_ID == 0x0001 && wait_ping == 1000){
+    Serial.print("Success rate: ");Serial.print(success_ping);Serial.println("%");
+  }
+  if(wait_ping < 1100)
+    wait_ping++;
   if(has_RX()){
-    Serial.println();
-    Serial.print("Rx: ");
+    Serial.print("Rx:");
     char dataBuffer[256]={};
     for(uint8_t i=TX_HEADER_LEN;i<RX_pkt_len-4;i++){
       dataBuffer[i-TX_HEADER_LEN] = RxBuffer[i]; 
     }
     DsrPacket *rxpkt = (DsrPacket*) dataBuffer;
     pkt = node.get_packet(rxpkt);
-    Serial.print("rxtype:");Serial.println(rxpkt->type);
-    Serial.print("rxdest:");Serial.println(rxpkt->dest_id);
-        Serial.print("type:");Serial.println(pkt.type);
+    Serial.print("type:");Serial.println(rxpkt->type);
     switch(pkt.type){
       case 1:
-        Serial.println("RREQ Send~");
+        wait_ping = 0;
         if(need_TX()){
+          Serial.print("RREQ Send: to ");Serial.println(pkt.dest_id);
           delay(TX_BACKOFF);
-          tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(DsrPacket));
+          tx_suc = pkt_Tx(0xffff,(char*) &pkt,sizeof(pkt));
           TX_available = 1;
         }
         break;
       case 2:
-        Serial.println("RREP Send~");
-        //packet_send(pkt, pkt.dest_id);
+         wait_ping = 0;
+        Serial.print("RREP Send: back ");Serial.println(pkt.dest_id);
         if(need_TX()){
           delay(TX_BACKOFF);
-          tx_suc = pkt_Tx(pkt.dest_id,(char*) &pkt,sizeof(DsrPacket));
+          tx_suc = pkt_Tx(pkt.dest_id,(char*) &pkt,sizeof(pkt));
           TX_available = 1;
         }
         break;
       case 4:
-        Serial.print("destid: ");Serial.println(pkt.dest_id);
-        Serial.print("reqid: ");Serial.println(pkt.req_id);
+        wait_ping = 0;
         if(pkt.dest_id == NODE_ID && pkt.req_id == NODE_ID){//ping end
-          t2 = millis();
           success_ping++;
-          Serial.print("RTT:");
-          Serial.println(t2-t1);
-          t1 = millis();
+          Serial.println("ping back!");
+          Serial.print("id: ");Serial.println(pkt.packet_id);
+          Serial.print("Rtt: ");Serial.print(millis()-t1[pkt.packet_id]);Serial.println(" ms");
+          Serial.println();
         }else{
-          Serial.println("keep ping");
           int target;
           if(pkt.req_id == pkt.src_id){
-            target = node.in_cache(pkt.dest_id);
+            for(int i=10-1;i >= 0;i--){
+              if(pkt.route[i] == NODE_ID)break;
+              target = pkt.route[i];
+            }
           }else{
             for(int i=0;i<10;i++){
               if(pkt.route[i] == NODE_ID)break;
               target = pkt.route[i];
             }
           }
-          Serial.println(target);
           if(target != 0){
             //packet_send(pkt,target);
+            Serial.print("ping to: ");Serial.println(target);
             if(need_TX()){
               delay(TX_BACKOFF);
-              tx_suc = pkt_Tx(target,(char*) &pkt,sizeof(DsrPacket));
+              tx_suc = pkt_Tx(target,(char*) &pkt,sizeof(pkt));
               TX_available = 1;
             }
           }
         }
         break;
       case 5:
-        Serial.println("RREQ done");
+        wait_ping = 0;
+        Serial.println("RREQ done get!");
+        Serial.println("Route: ");
+        for(int i=0;i<10;i++){
+          Serial.print(rxpkt->route[i]);Serial.print(" ");
+        }
+        Serial.println();
+        Serial.println();
         flag = 1;
         break;
       case 0:
@@ -252,10 +236,12 @@ uint8_t pkt_Tx(uint16_t dst_addr, char* msg, size_t datalength){
   // fill the payload
   for(i = 0; i< datalength; i++){
     TxBuffer[TX_HEADER_LEN + i] = msg[i];
-    checksum += (int)msg[i] % 10;
+    checksum += (uint8_t)msg[i] % 10;
+    //Serial.println((int)msg[i] % 10);
   }
   checksum %= 10;
   TxBuffer[2] = checksum;
+  //Serial.print("send:");Serial.println(checksum);
   pkt_len = TX_HEADER_LEN + i;
   // fill the software fcs
   if(TX_SOFT_FCS){
@@ -335,11 +321,14 @@ uint8_t* pkt_Rx(uint8_t len, uint8_t* frm, uint8_t lqi, uint8_t crc_fail){
   //checksum checked
   uint8_t checksum = 0;
   for(uint8_t i=TX_HEADER_LEN;i<len-4;i++){
-    checksum += (int)frm[i] % 10;
+    int temp = (uint8_t)frm[i] % 10;
+    checksum += temp;
+    //Serial.print(temp);Serial.print(" ");
   }
+  //Serial.println();
   checksum %= 10;
   if(frm[2] != checksum){
-    //Serial.println("checksum failed");
+    //Serial.print("checksum failed;");Serial.print(frm[2]);Serial.print("!=");Serial.println(checksum);
     return RxBuffer;
   }
   
