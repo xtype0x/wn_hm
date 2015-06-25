@@ -71,7 +71,7 @@ else
 end
 
 %% Generate vehicle outlines and set their height
-if size(vehicles,2)==3 || size(vehicles,2)==5
+if size(vehicles,2)==3 || size(vehicles,2)>4
     % Simulation needs the Lat/Long coordinates for Google Earth Visualization
     vehiclesLatLon = vehicles;
     % Convert Lat/Long coordinates to UTM
@@ -101,5 +101,5 @@ if size(vehicles,2)==3 || size(vehicles,2)==5
         numRowsPerVehicle,vehDimensionParams,lengthThreshold,verbose);   
 else
     error(['Vehicle array needs to be in a three-column format: [ID,Lat,Lon] '...
-           'or five-column format: [ID,midpointLat,midpointLong,vehicleType,vehicleBearing]']);
+           'or six-column format: [ID,midpointLat,midpointLong,vehicleType,vehicleBearing,angle]']);
 end
