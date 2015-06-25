@@ -15,11 +15,11 @@
 %   vehiclesFile = 'inputPolygon/vehiclesPorto';
 % Also in the package:
 % Vehicles in one quarter of Porto (bottom left quarter)
-   vehiclesFile = 'inputPolygon/vehiclesPortoQuarter'; 
+%   vehiclesFile = 'inputPolygon/vehiclesPortoQuarter'; 
 % SUMO simulation in the city of Cologne, Germany
 %   vehiclesFile = 'inputMobilitySUMO/CologneSUMOMobility.xml'; 
 % SUMO simulation in the city of Newcastle, UK
-% vehiclesFile = 'inputMobilitySUMO/NewcastleSUMOMobility.xml';
+ vehiclesFile = 'inputMobilitySUMO/NewcastleSUMOMobility.xml';
    
 % Bounding box (bottom-left, top-right) for removing vehicles outside of
 % the desired area (applies for SUMO-generated mobility files). 
@@ -34,11 +34,11 @@ bBoxVehicles = [-Inf,-Inf,Inf,Inf];
 %   staticFile = 'inputPolygon/buildingsPorto'; 
 % Also in the package:
 % Vehicles in one quarter of Porto (bottom left quarter)
-   staticFile = 'inputPolygon/buildingsPortoQuarter'; 
+%   staticFile = 'inputPolygon/buildingsPortoQuarter'; 
 % Part of Cologne (OpenStreetMap .osm)
 %   staticFile = 'inputPolygon/CologneCityPart.osm'; 
 % Part of Newcastle, UK (OpenStreetMap .osm)
-% staticFile = 'inputPolygon/Newcastle.osm';
+ staticFile = 'inputPolygon/Newcastle.osm';
 
 % Load the file containing outlines of foliage. If foliage is contained in
 % staticFile above, use 'inputPolygon/emptyStaticFile' as foliageFile.
@@ -94,18 +94,18 @@ numCommPairs = 10^4;
 
 %% Dimensions of vehicles (in meters)
 % Mean and standard deviation for normally distributed dimensions
-carMeanHeight = 1.5;
-carStdDev =.1;
+carMeanHeight = 1.13;
+carStdDev =.02;
 truckMeanHeight = 3; 
 truckStdDev = .1;
 
-carMeanWidth = 1.75;
-carStdDevWidth = .1;
+carMeanWidth = 0.68;
+carStdDevWidth = .05;
 truckMeanWidth = 2;
 truckStdDevWidth = .1;
 
-carMeanLength = 5;
-carStdDevLength = .4;
+carMeanLength = 1.85;
+carStdDevLength = .2;
 truckMeanLength = 9;
 truckStdDevLength = .6;
 

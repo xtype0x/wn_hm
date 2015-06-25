@@ -55,17 +55,17 @@ if length(uniqueVehicles)<length(vehicleRows(:,1))
     widths(vehicleRows(uniqueVehiclesIndex,4)==0) = ...
         randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==0))*...
         vehDimensionParams(2,2)+vehDimensionParams(2,1);
-    widths(vehicleRows(uniqueVehiclesIndex,4)==1) = ...
-        randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==1))*...
-        vehDimensionParams(2,4)+vehDimensionParams(2,3);
+    % widths(vehicleRows(uniqueVehiclesIndex,4)==1) = ...
+    %     randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==1))*...
+    %     vehDimensionParams(2,4)+vehDimensionParams(2,3);
     
     lengths = zeros(size(uniqueVehicles));
     lengths(vehicleRows(uniqueVehiclesIndex,4)==0) = ...
         randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==0))*...
         vehDimensionParams(3,2)+vehDimensionParams(3,1);
-    lengths(vehicleRows(uniqueVehiclesIndex,4)==1) = ...
-        randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==1))*...
-        vehDimensionParams(3,4)+vehDimensionParams(3,3);
+    % lengths(vehicleRows(uniqueVehiclesIndex,4)==1) = ...
+    %     randn(1,sum(vehicleRows(uniqueVehiclesIndex,4)==1))*...
+    %     vehDimensionParams(3,4)+vehDimensionParams(3,3);
     
     % Define points as per figure above
     [P1,P2,P3,P4,P5]=deal(ones(size(vehicleRows,1),2)*Inf);
@@ -102,13 +102,13 @@ else
     widths = zeros(size(type));
     widths(~type) = ...
         randn(1,sum(type==0))*vehDimensionParams(2,2)+vehDimensionParams(2,1);
-    widths(logical(type)) = ...
-        randn(1,sum(type))*vehDimensionParams(2,4)+vehDimensionParams(2,3);    
+    % widths(logical(type)) = ...
+    %     randn(1,sum(type))*vehDimensionParams(2,4)+vehDimensionParams(2,3);    
     lengths = zeros(size(type));
     lengths(~type) = ...
         randn(1,sum(type==0))*vehDimensionParams(3,2)+vehDimensionParams(3,1);
-    lengths(logical(type)) = ...
-        randn(1,sum(type))*vehDimensionParams(3,4)+vehDimensionParams(3,3);
+    % lengths(logical(type)) = ...
+    %     randn(1,sum(type))*vehDimensionParams(3,4)+vehDimensionParams(3,3);
 
     % Set P1-P5 (without rotation using bearing, which is done later)
     P1(:,1) = vehicleRows(:,3)+lengths./2;
@@ -143,13 +143,13 @@ P5s = vehicleRows(:,[3,2])+[(rotMatrices(:,1).*P5Shift(:,1)+rotMatrices(:,2).*P5
 P6s = vehicleRows(:,[3,2])+[(rotMatrices(:,1).*P6Shift(:,1)+rotMatrices(:,2).*P6Shift(:,2)) (rotMatrices(:,3).*P6Shift(:,1)+rotMatrices(:,4).*P6Shift(:,2))];
 
 % Insert points into vehiclePolygons array
-vehiclePolygons = zeros(size(vehicleRows,1)*6,3);
-vehiclePolygons(1:6:end,:) = [vehicleRows(:,1) fliplr(P1s)];
-vehiclePolygons(2:6:end,:) = [vehicleRows(:,1) fliplr(P2s)];
-vehiclePolygons(3:6:end,:) = [vehicleRows(:,1) fliplr(P3s)];
-vehiclePolygons(4:6:end,:) = [vehicleRows(:,1) fliplr(P4s)];
-vehiclePolygons(5:6:end,:) = [vehicleRows(:,1) fliplr(P5s)];
-vehiclePolygons(6:6:end,:) = [vehicleRows(:,1) fliplr(P6s)];
+vehiclePolygons = zeros(size(vehicleRows,1)*6,4);
+vehiclePolygons(1:6:end,:) = [vehicleRows(:,1) fliplr(P1s) vehicleRows(:,5)];
+vehiclePolygons(2:6:end,:) = [vehicleRows(:,1) fliplr(P2s) vehicleRows(:,5)];
+vehiclePolygons(3:6:end,:) = [vehicleRows(:,1) fliplr(P3s) vehicleRows(:,5)];
+vehiclePolygons(4:6:end,:) = [vehicleRows(:,1) fliplr(P4s) vehicleRows(:,5)];
+vehiclePolygons(5:6:end,:) = [vehicleRows(:,1) fliplr(P5s) vehicleRows(:,5)];
+vehiclePolygons(6:6:end,:) = [vehicleRows(:,1) fliplr(P6s) vehicleRows(:,5)];
 
 if verbose
     fprintf('Generating vehicle polygons takes %f seconds.\n', toc);

@@ -10,7 +10,7 @@ function additionalAtten = ...
 %   obsHeight:              obstacle height
 %   distTxRx:               Tx-Rx distance
 %   distTxObs:              Tx-obstacle distance
-%   f:                      frequency in GHz
+%   f:                      frequency in Hz
 %
 % Output:
 %   additionalAtten:        additional attenuation due to the obstacle

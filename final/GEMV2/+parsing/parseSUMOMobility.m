@@ -35,6 +35,7 @@ numVehiclesPerTimestep = zeros(numTimesteps,1);
 vehiclesArray = ones(numTimesteps*1000,5)*Inf;
 currvehiclesArrayIndex = 1;
 % For each timestep, get all vehicles and their information
+fprintf('iterationing~~\n');
 for ii=1:numTimesteps
     numVehiclesPerTimestep(ii) = ...
         size(SUMOMobilityFile.fcd_dash_export.timestep{ii}.vehicle,2);
@@ -77,9 +78,9 @@ for ii=1:numTimesteps
         vehiclesArray(currvehiclesArrayIndex,4) = str2double(currVehType...
             (isstrprop(currVehType,'digit')));
         % Get the bearing, convert it to radians
-        vehiclesArray(currvehiclesArrayIndex,5) = polygonManipulation.deg2rad...
-            (str2double(SUMOMobilityFile.fcd_dash_export.timestep...
-            {ii}.vehicle{jj}.Attributes.angle)-correctionAngle);    
+        vehiclesArray(currvehiclesArrayIndex,5) = ...
+            str2double(SUMOMobilityFile.fcd_dash_export.timestep...
+            {ii}.vehicle{jj}.Attributes.angle);    
         % Increase counter
         currvehiclesArrayIndex=currvehiclesArrayIndex+1;
     end
