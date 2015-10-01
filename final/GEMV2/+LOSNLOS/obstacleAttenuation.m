@@ -28,4 +28,4 @@ H = obsHeight-obsHeightTxRxLine;
 r1 = sqrt(lambda.*distTxObs.*distRxObs./distTxRx); 
 V0 = sqrt(2).*H./r1;
 additionalAtten = zeros(length(V0),1);
-additionalAtten(V0>-0.78) = 6.9 + 20*log10(sqrt((V0-0.1).^2+1)+V0-0.1);
+additionalAtten = 6.9 + 20*log10(sqrt((V0-0.1).^2+1)+V0-0.1);
